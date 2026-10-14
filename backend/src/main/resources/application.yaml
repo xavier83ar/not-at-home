@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: not-at-home
+  jpa:
+    open-in-view: false
+  session:
+    jdbc:
+      # Tables are created by Flyway (see db/migration).
+      initialize-schema: never
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+
+management:
+  endpoints:
+    web:
+      base-path: /api
+      exposure:
+        include: health
+      path-mapping:
+        health: health
+
+springdoc:
+  api-docs:
+    path: /api/v3/api-docs
+  swagger-ui:
+    path: /api/swagger-ui.html
