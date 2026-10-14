@@ -18,6 +18,7 @@ class SecurityConfig {
             auth ->
                 auth.requestMatchers(
                         "/api/health",
+                        "/api/info",
                         "/api/v3/api-docs/**",
                         "/api/swagger-ui.html",
                         "/api/swagger-ui/**")

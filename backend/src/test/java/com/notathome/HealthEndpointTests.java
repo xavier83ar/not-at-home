@@ -44,10 +44,15 @@ class HealthEndpointTests {
   }
 
   @Test
-  void openApiSpecIsServed() throws Exception {
+  void infoIsPublicAndDocumentedInOpenApi() throws Exception {
+    mockMvc
+        .perform(get("/api/info"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("not-at-home"))
+        .andExpect(jsonPath("$.version").isNotEmpty());
     mockMvc
         .perform(get("/api/v3/api-docs"))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.openapi").exists());
+        .andExpect(jsonPath("$.paths['/api/info']").exists());
   }
 }

@@ -1,4 +1,7 @@
 spring:
+  profiles:
+    # Plain `./mvnw spring-boot:run` is the dev setup; production sets SPRING_PROFILES_ACTIVE=prod.
+    default: dev
   application:
     name: not-at-home
   jpa:
@@ -23,6 +26,10 @@ management:
         include: health
       path-mapping:
         health: health
+  health:
+    # An unreachable SMTP server must not make the app report itself as down.
+    mail:
+      enabled: false
 
 springdoc:
   api-docs:

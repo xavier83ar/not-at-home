@@ -4,7 +4,7 @@ dev-db:
 	docker compose up -d
 
 dev-backend:
-	cd backend && SPRING_PROFILES_ACTIVE=dev ./mvnw spring-boot:run
+	cd backend && ./mvnw spring-boot:run
 
 test:
 	cd backend && ./mvnw verify

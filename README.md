@@ -27,7 +27,7 @@ make dev-db        # PostgreSQL (5432) and Mailpit (SMTP 1025, web UI http://loc
 make dev-backend   # API on http://localhost:8080
 ```
 
-`make dev-backend` runs with the `dev` profile, which also starts the Compose services by itself if they are not up.
+`make dev-backend` runs with the `dev` profile (the default), which also starts the Compose services by itself if they are not up.
 
 Handy URLs while developing:
 
