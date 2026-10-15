@@ -35,9 +35,9 @@ const { user } = useAuth()
               user && !user.emailVerified ? 'Verify your email address to start a topic' : undefined
             "
           >
-            <BButton :variant="null" class="btn-accent text-nowrap" size="sm" disabled
-              >New topic</BButton
-            >
+            <BButton :variant="null" class="btn-accent text-nowrap" size="sm" disabled>
+              New topic
+            </BButton>
           </span>
           <UserMenu v-if="user" />
           <template v-else>
