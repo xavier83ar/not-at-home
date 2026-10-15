@@ -1,10 +1,12 @@
 # Not at Home: Forum Requirements
 
-> **Status:** v0.4, ready for planning <br>
-> **Last updated:** 2026-10-14 <br>
+> **Status:** v0.5, ready for planning <br>
+> **Last updated:** 2026-10-15 <br>
 > **Repository:** https://github.com/xavier83ar/not-at-home
 
 Items marked **TBD** are still to be decided. None of them block the implementation plan (see section 10).
+
+Items marked **Post-MVP** are wanted but are built after the first release (see section 1.4 and the plan's M10). The first release has email and password login only.
 
 ---
 
@@ -28,6 +30,10 @@ Items marked **TBD** are still to be decided. None of them block the implementat
 - Temporary user suspensions (admins can only ban and unban)
 - Database backups
 - Multiple UI languages
+
+### 1.4 Post-MVP
+Planned for after the first release; everything else in this document works without them:
+- Log in or sign up with Google (FR-1.5), and everything that exists only because of it: the OAuth2 Client dependency, `google_id`, password-less accounts in the settings and account deletion flows, and the Google avatar.
 
 ---
 
@@ -92,7 +98,7 @@ compose.yaml  local dependencies: PostgreSQL, Mailpit
 Follow Spring Boot's standard approach, starting from Spring Initializr with Maven:
 - **Spring Web** for the REST API and **Validation** for request checks.
 - **Spring Data JPA** for data access, **Flyway** for migrations.
-- **Spring Security** for password login, authorization and CSRF protection, with **OAuth2 Client** for Google login.
+- **Spring Security** for password login, authorization and CSRF protection. **OAuth2 Client** for Google login is added after the first release (FR-1.5, post-MVP).
 - **Spring Session JDBC** to store sessions in PostgreSQL (section 4.5).
 - **Spring Mail** for verification and password reset emails.
 - **Spring Boot Docker Compose support**, which starts PostgreSQL and Mailpit from `compose.yaml` when the app runs in dev.
@@ -104,7 +110,7 @@ Follow Spring Boot's standard approach, starting from Spring Initializr with Mav
 **Decision: server-side sessions**, not JWTs.
 - Spring Security issues a session cookie (`HttpOnly`, `Secure`, `SameSite=Lax`) after login. Sessions are stored in PostgreSQL with Spring Session JDBC, so restarts and deploys don't log users out.
 - "Remember me" uses Spring Security's persistent remember-me tokens, stored in the database (about 30 days).
-- Google login uses Spring Security's OAuth2 Client and ends in the same kind of session.
+- Post-MVP: Google login will use Spring Security's OAuth2 Client and end in the same kind of session.
 - Logout, password change, ban or demotion invalidate the user's sessions and remember-me tokens immediately.
 - Mutating requests are protected with Spring Security's CSRF token, which the frontend sends in a header.
 
@@ -121,7 +127,7 @@ Follow Spring Boot's standard approach, starting from Spring Initializr with Mav
 - **Dev:** `docker compose up` (or let Spring Boot start it) for PostgreSQL and Mailpit, then `./mvnw spring-boot:run` in `backend/` and `npm run dev` in `frontend/`. A small Makefile can wrap these commands.
 - **Backend image:** `./mvnw spring-boot:build-image`, Spring Boot's built-in Buildpacks support, with no Dockerfile to maintain.
 - **Frontend image:** a multi-stage Dockerfile that builds the Nuxt app and runs its Node server.
-- Both images are production-ready and configured through environment variables (database URL, Google OAuth credentials, mail settings, backend URL for the proxy).
+- Both images are production-ready and configured through environment variables (database URL, mail settings, backend URL for the proxy; Google OAuth credentials once Google login is added).
 
 ### 4.8 CI/CD and testing
 - Two GitHub Actions workflows, each triggered only by changes in its own folder.
@@ -139,7 +145,7 @@ Follow Spring Boot's standard approach, starting from Spring Initializr with Mav
 | Backend | Java + Spring Boot (Maven), REST API |
 | Database | PostgreSQL, migrations with Flyway |
 | Search | PostgreSQL full-text search |
-| Authentication | Spring Security: password login + Google OAuth2, server sessions (Spring Session JDBC) |
+| Authentication | Spring Security: password login (Google OAuth2 post-MVP), server sessions (Spring Session JDBC) |
 | API contract | OpenAPI (springdoc) + generated TypeScript types |
 | Email | Spring Mail; Mailpit in dev; production provider **TBD** (required for verification and password reset) |
 | File storage | **TBD**: local disk vs. object storage (e.g. S3), for avatars, category images and post images |
@@ -205,14 +211,14 @@ Banned users cannot log in at all, so they can only do what a guest can.
 - FR-1.2 Usernames and emails are unique (case-insensitive). Username rules: 3 to 30 characters, letters, digits, `_` and `-`. Usernames cannot be changed after registration; the display name can.
 - FR-1.3 Passwords: at least 8 characters, stored hashed (see NFR-2), never in plain text.
 - FR-1.4 Log in with username or email plus password.
-- FR-1.5 Log in or sign up with Google:
-  - A Google login with an email that already has an account logs into that account, and links the Google identity to it.
+- FR-1.5 **(Post-MVP)** Log in or sign up with Google:
+  - A Google login with an email that already has an account logs into that account, and links the Google identity to it. If that account's email was never verified, linking first removes its password and ends its sessions, so whoever registered the address cannot keep access.
   - A Google login with an unknown email is a shortcut to registration: it opens the registration form pre-filled with what Google provides (email, display name, and profile picture as the avatar). The user picks a username and can change the display name. The email field is locked to the Google address, which counts as verified, so no verification email is sent. No password is needed; the user can set one later (FR-1.8).
 - FR-1.6 Log out.
 - FR-1.7 "Remember me" option that keeps the user logged in across browser restarts for 30 days.
-- FR-1.8 Password reset via an email link with an expiring, single-use token. Accounts created with Google and no password can use it to set one.
-- FR-1.9 Email verification on registration. Users can log in before verifying, but cannot post, reply or report until they do. They can request a new verification email. Accounts created through Google are already verified (FR-1.5).
-- FR-1.10 Banned users cannot log in, by password or Google, and see a message saying the account is banned.
+- FR-1.8 Password reset via an email link with an expiring, single-use token. Once Google login exists (FR-1.5), accounts created with Google and no password can use it to set one.
+- FR-1.9 Email verification on registration. Users can log in before verifying, but cannot post, reply or report until they do. They can request a new verification email. Accounts created through Google are already verified (FR-1.5, post-MVP).
+- FR-1.10 Banned users cannot log in, by password (or by Google, once FR-1.5 exists), and see a message saying the account is banned.
 
 ### FR-2 Categories
 - FR-2.1 The forum is organized into categories, each with a name, description, cover image and display order.
@@ -262,7 +268,7 @@ Banned users cannot log in at all, so they can only do what a guest can.
 - FR-8.1 Public profile page: username, display name, avatar, role badge, join date, post count, profile content and recent topics and posts.
 - FR-8.2 Users can edit their display name, avatar (uploaded image) and profile content (written with Editor.js). Users without an avatar get a generated one (e.g. their initials).
 - FR-8.3 Users can change their email (the new address must be verified) and password (requires the current password).
-- FR-8.4 Users can delete their account, after confirming with their password (or Google). The account is soft deleted and its email and username are anonymized, so the same email can register again. Where their name would appear, it shows "Deleted user". All their posts are deleted following FR-5.3, so topics they started with replies from others remain.
+- FR-8.4 Users can delete their account, after confirming with their password (or Google, once FR-1.5 exists). The account is soft deleted and its email and username are anonymized, so the same email can register again. Where their name would appear, it shows "Deleted user". All their posts are deleted following FR-5.3, so topics they started with replies from others remain.
 - FR-8.5 The last remaining admin cannot delete their account or be demoted (see FR-9.4).
 
 ### FR-9 Moderation
@@ -360,7 +366,7 @@ Based on the design reference:
 
 To be refined in the plan. All tables have `created_at`; soft-deletable tables have `deleted_at`. Spring Session and Spring Security's remember-me add their own tables (sessions and persistent logins), created by Flyway migrations.
 
-- **User**: id, username, email, email_verified_at, password_hash (nullable for Google-only accounts), google_id (nullable), role (user/admin), display_name, avatar_url, profile_content (Editor.js JSON), status (active/banned), last_seen_at, deleted_at
+- **User**: id, username, email, email_verified_at, password_hash (nullable for Google-only accounts, post-MVP), google_id (nullable; unused until Google login, cleared when an account is deleted), role (user/admin), display_name, avatar_url, profile_content (Editor.js JSON), status (active/banned), last_seen_at, deleted_at
 - **Category**: id, name, slug, description, image_url, position, deleted_at
 - **Topic**: id, category_id, author_id, title, slug, is_pinned, is_locked, last_post_at, reply_count, deleted_at
 - **Post**: id, topic_id, author_id, content (Editor.js JSON), search_text (plain text for full-text search), edited_at, deleted_at

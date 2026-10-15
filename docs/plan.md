@@ -1,8 +1,8 @@
 # Not at Home: Implementation Plan
 
-> **Status:** Draft v0.1, open for review <br>
-> **Last updated:** 2026-10-14 <br>
-> **Based on:** [requirements v0.4](requirements.md)
+> **Status:** Draft v0.2, open for review <br>
+> **Last updated:** 2026-10-15 <br>
+> **Based on:** [requirements v0.5](requirements.md)
 
 This plan turns the requirements into ordered milestones. Each milestone is a working, testable slice of the forum, built through backend, frontend and tests together, so the app runs end to end after every one.
 
@@ -44,8 +44,7 @@ Requirement IDs (FR-x, NFR-x, section numbers) refer to [`requirements.md`](requ
 | # | Milestone | Main requirements |
 |---|---|---|
 | M0 | Project foundation | Section 4, NFR-5, NFR-6 |
-| M1 | Accounts and authentication | FR-1 (except Google), NFR-2 |
-| M2 | Google sign-in | FR-1.5 |
+| M1 | Accounts and authentication | FR-1 (except FR-1.5, Google), NFR-2 |
 | M3 | Categories, uploads and seed data | FR-2, FR-10.3, FR-10.4 |
 | M4 | Topics and posts | FR-3, FR-4, FR-5, FR-7 |
 | M5 | Home page, navigation and SEO | Section 8, NFR-1 |
@@ -53,8 +52,11 @@ Requirement IDs (FR-x, NFR-x, section numbers) refer to [`requirements.md`](requ
 | M7 | Profiles and account settings | FR-8 |
 | M8 | Moderation and admin panel | FR-9, FR-10.1, FR-10.2, FR-5.8 |
 | M9 | Polish and release readiness | NFR-1 to NFR-4, open TBDs |
+| M10 | Google sign-in (after the first release) | FR-1.5 |
 
 M6 (search) and M7 (profiles) only depend on M4, so they can be swapped or worked on in parallel.
+
+Google sign-in used to be M2. It was moved out of the MVP and to the end (M10), and the other milestones kept their numbers, so there is no M2. M9 is the MVP release line: the forum is ready to deploy without Google, and M10 comes after.
 
 ---
 
@@ -71,7 +73,7 @@ Goal: both services run in dev, talk to each other through `/api`, and CI builds
 - [ ] `.env.example` listing every environment variable both services read.
 
 **Backend (`backend/`)**
-- [ ] Generate from Spring Initializr with Maven: Web, Validation, Data JPA, PostgreSQL driver, Flyway, Security, OAuth2 Client, Session JDBC, Mail, Docker Compose support, Testcontainers. Pick the current Spring Boot release and the newest Java LTS it supports, and record both in the README.
+- [ ] Generate from Spring Initializr with Maven: Web, Validation, Data JPA, PostgreSQL driver, Flyway, Security, Session JDBC, Mail, Docker Compose support, Testcontainers. Pick the current Spring Boot release and the newest Java LTS it supports, and record both in the README.
 - [ ] Add springdoc-openapi; spec served at `/api/v3/api-docs` in dev.
 - [ ] Flyway baseline migration (empty schema plus Spring Session tables).
 - [ ] `GET /api/health` (or Actuator's health endpoint under `/api`).
@@ -122,21 +124,6 @@ Goal: people can register, verify their email, log in and out, stay logged in, a
 - [ ] Form validation messages that show the backend's field errors.
 
 **Done when:** a new user can register, receive the verification email in Mailpit, verify, log out, log back in with "remember me", restart the browser and still be logged in, and reset a forgotten password.
-
----
-
-### M2. Google sign-in
-Goal: FR-1.5 works for both new and existing accounts.
-
-- [ ] Google OAuth2 client registration through Spring Security, with credentials from environment variables. Redirect URI on the frontend's domain (`/api/login/oauth2/code/google`), and the backend configured to trust forwarded headers from the proxy so generated URLs are correct.
-- [ ] Existing email: log in and store `google_id` on the account.
-- [ ] Unknown email: keep the Google profile (email, name, picture) in the session, redirect to the registration page in "Google" mode. The form is pre-filled, the email is locked, and no password is asked. Submitting creates a verified account and logs the user in.
-- [ ] Download the Google profile picture as the user's avatar (uses the upload storage from M3, so this step can land after M3).
-- [ ] Banned accounts are rejected here too.
-- [ ] "Continue with Google" button on the Log in and Register pages.
-- [ ] Document how to create the Google OAuth credentials in the README.
-
-**Done when:** a new Google user lands on a pre-filled form, picks a username and is logged in without any email; an existing user with the same email is logged straight in.
 
 ---
 
@@ -230,8 +217,7 @@ Goal: FR-8.
 - [ ] Settings page: edit display name, avatar upload, profile content with Editor.js (FR-8.2). Generated initials avatar when none is set.
 - [ ] Change email with re-verification of the new address (FR-8.3); the old address stays active until the new one is verified.
 - [ ] Change password, requiring the current one, and ending other sessions (FR-8.3).
-- [ ] Set a password for Google-only accounts (FR-1.8 path, available from settings too).
-- [ ] Delete account (FR-8.4): confirm with password or Google, soft delete, anonymize email and username, delete posts following FR-5.3, show "Deleted user" where the name appeared, end all sessions. The last admin can't delete their account (FR-8.5).
+- [ ] Delete account (FR-8.4): confirm with password, soft delete, anonymize email and username (and clear `google_id`, so a Google identity is never stuck on a deleted account when M10 lands), delete posts following FR-5.3, show "Deleted user" where the name appeared, end all sessions. The last admin can't delete their account (FR-8.5).
 
 **Done when:** a user can personalize their profile, change email and password, and delete their account with the forum still reading correctly afterwards.
 
@@ -264,7 +250,34 @@ Goal: everything in the non-functional requirements is checked, and the remainin
 - [ ] Production configuration documented: every environment variable, how to run migrations and the seed, how to build and run both images.
 - [ ] Decide the remaining TBDs (requirements section 10): hosting, production email provider, file storage. Add a deploy step to both workflows once hosting is chosen.
 
-**Done when:** the forum is ready to deploy as soon as hosting is chosen.
+**Done when:** the forum is ready to deploy as soon as hosting is chosen. This is the MVP release line; Google sign-in (M10) is not needed for it.
+
+---
+
+### M10. Google sign-in (after the first release)
+Goal: FR-1.5 works for both new and existing accounts. Moved out of the MVP: it needs the final production domain for the OAuth redirect URI and consent screen, and the forum is fully usable with email and password.
+
+Already in place from M1: `users.google_id` (unique) and a nullable `password_hash` (`V2__users.sql`), password reset that works for accounts without a password, and forwarded-header handling in the backend and the Nuxt proxy. The `spring-boot-starter-security-oauth2-client` dependency (and its test starter) was removed from `pom.xml` and has to be added back here.
+
+**Backend**
+- [ ] Add the OAuth2 client starter back. Google client registration through Spring Security, with credentials from environment variables. Redirect URI on the frontend's domain (`/api/login/oauth2/code/google`); test the whole flow through the Nuxt proxy, not against the backend directly.
+- [ ] Add `googleId` to the `User` entity.
+- [ ] Existing email: log in and store `google_id` on the account. If that account is not verified, clear its password and end its sessions first, so whoever registered the address with a password of their own can't keep access to it.
+- [ ] Unknown email: keep the Google profile (email, name, picture) in the session, redirect to the registration page in "Google" mode. The form is pre-filled, the email is locked, and no password is asked. Submitting creates a verified account and logs the user in. Rate limited like registration.
+- [ ] Download the Google profile picture as the user's avatar (uses the upload storage from M3).
+- [ ] Banned accounts are rejected here too (FR-1.10).
+
+**Retrofit in earlier milestones** (each of these assumed every account has a password)
+- [ ] Settings (M7): set a password for Google-only accounts (FR-1.8 path); change password and change email without asking for a current password when there is none.
+- [ ] Delete account (M7): confirm with Google when the account has no password.
+
+**Frontend**
+- [ ] "Continue with Google" button on the Log in and Register pages, and the Google mode of the Register page.
+
+**Docs**
+- [ ] Document how to create the Google OAuth credentials, and the new environment variables, in the README and `.env.example`.
+
+**Done when:** a new Google user lands on a pre-filled form, picks a username and is logged in without any email; an existing user with the same email is logged straight in; a Google-only user can set a password and delete their account.
 
 ---
 
@@ -273,7 +286,8 @@ Goal: everything in the non-functional requirements is checked, and the remainin
 | Risk | Mitigation |
 |---|---|
 | Session cookies and CSRF through the Nuxt proxy during SSR are easy to get subtly wrong. | Build and test the cookie-forwarding client in M0 and login in M1 before any feature depends on them. |
-| Google OAuth behind a proxy produces wrong redirect URLs. | Configure forwarded-header handling in M2 and test the full flow locally through the Nuxt proxy, not against the backend directly. |
+| Google OAuth behind a proxy produces wrong redirect URLs. | Forwarded-header handling is already done (M1); in M10, test the full flow locally through the Nuxt proxy, not against the backend directly. |
+| Google sign-in lands last, so M7's account code assumes every account has a password. | M10 lists the retrofit explicitly (settings and account deletion), and M7 already clears `google_id` when anonymizing an account. |
 | Editor.js JSON is user input and could carry XSS. | Validate block types and sanitize on the server when saving, and render with our own component instead of raw HTML from the client. |
 | Editor.js only runs in the browser. | Keep the editor client-only and the renderer server-side from the first post (M4). |
 | Counters (`reply_count`, last activity, post counts) drift after deletes and moves. | Update them in the same transaction as the change, and cover deletes and moves with tests. |
