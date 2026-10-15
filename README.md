@@ -59,6 +59,15 @@ The frontend's TypeScript types are generated from the backend's OpenAPI spec an
 make api-types
 ```
 
+## Continuous integration
+
+Two GitHub Actions workflows run on pull requests and on pushes to `main`, each only when its own folder changes:
+
+- `backend.yml`: format check, tests (Testcontainers) and the Buildpacks image build.
+- `frontend.yml`: lint, format check, type check, tests and the Docker image build.
+
+Images are built but not published or deployed yet; that comes once hosting is chosen. Local image names: `not-at-home-backend:<version>` and `not-at-home-frontend`.
+
 ## Configuration
 
 Production images read their settings from environment variables; see [`.env.example`](.env.example).
