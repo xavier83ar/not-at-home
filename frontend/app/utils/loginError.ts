@@ -1,4 +1,5 @@
 import type { ApiProblem } from '~/utils/problem'
+import { rateLimitMessage } from '~/utils/rateLimit'
 
 /**
  * What to tell someone whose login attempt failed, or undefined when there is nothing to add to
@@ -6,6 +7,8 @@ import type { ApiProblem } from '~/utils/problem'
  */
 export function loginErrorMessage(problem: ApiProblem): string | undefined {
   switch (problem.status) {
+    case 429:
+      return rateLimitMessage(problem.retryAfterSeconds)
     case 400:
       return undefined
     case 401:

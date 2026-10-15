@@ -27,13 +27,21 @@ async function onSubmit() {
   fieldErrors.value = {}
   try {
     await login(form.login, form.password, form.rememberMe)
-    await navigateTo(destination.value)
   } catch (error) {
     const problem = parseProblem(error)
     fieldErrors.value = problem.fieldErrors
     message.value = loginErrorMessage(problem)
+    return
   } finally {
     submitting.value = false
+  }
+  // Outside the try on purpose: if the page they were heading for refuses them (a 403 from its
+  // route middleware), that is not a failed login and the form must not report it as one. Nuxt
+  // shows its error page, so there is nothing to do with the refusal here.
+  try {
+    await navigateTo(destination.value)
+  } catch {
+    // Refused by the destination (see above); the error page is already showing.
   }
 }
 </script>

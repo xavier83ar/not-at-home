@@ -2,6 +2,8 @@ package com.notathome.auth;
 
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.NOT_REQUIRED;
 
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimited;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -83,6 +85,7 @@ class AuthController {
    * ACCOUNT_BANNED} for a banned account (FR-1.10).
    */
   @PostMapping("/api/auth/login")
+  @RateLimited(RateLimitPolicy.LOGIN)
   CurrentUserResponse login(
       @Valid @RequestBody LoginRequest body,
       HttpServletRequest request,

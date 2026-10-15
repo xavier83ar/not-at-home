@@ -35,6 +35,14 @@ describe('parseProblem', () => {
     expect(parseProblem({ status: 403, data: { code: 42 } }).code).toBeUndefined()
   })
 
+  it('reads how long to wait from a 429', () => {
+    const limited = { status: 429, data: { code: 'RATE_LIMITED', retryAfterSeconds: 12 } }
+    expect(parseProblem(limited).retryAfterSeconds).toBe(12)
+    expect(
+      parseProblem({ status: 429, data: { retryAfterSeconds: '12' } }).retryAfterSeconds,
+    ).toBeUndefined()
+  })
+
   it('copes with errors that have no response (network failures) or odd shapes', () => {
     expect(parseProblem(new Error('fetch failed'))).toEqual({
       status: undefined,

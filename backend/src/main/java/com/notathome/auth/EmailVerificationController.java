@@ -1,5 +1,7 @@
 package com.notathome.auth;
 
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimited;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -27,6 +29,7 @@ class EmailVerificationController {
    * often open the link on another device.
    */
   @PostMapping("/api/auth/verify-email")
+  @RateLimited(RateLimitPolicy.VERIFY_EMAIL)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   void verify(@Valid @RequestBody VerifyEmailRequest body) {
     verification.verify(body.token().strip());
@@ -34,6 +37,7 @@ class EmailVerificationController {
 
   /** Sends a new verification email to the logged-in user. */
   @PostMapping("/api/auth/resend-verification")
+  @RateLimited(RateLimitPolicy.RESEND_VERIFICATION)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   void resend(@AuthenticationPrincipal AuthUser principal) {
     verification.resend(principal.getId());

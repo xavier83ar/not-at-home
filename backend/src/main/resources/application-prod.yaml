@@ -15,7 +15,6 @@ app:
     from: ${MAIL_FROM}
 
 server:
-  forward-headers-strategy: framework
   servlet:
     session:
       cookie:

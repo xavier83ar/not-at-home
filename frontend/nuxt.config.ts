@@ -32,6 +32,10 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Server only. Override at runtime with NUXT_BACKEND_URL.
     backendUrl: 'http://localhost:8080',
+    // Server only. Override at runtime with NUXT_TRUST_FORWARDED_FOR=true, and only when a reverse
+    // proxy in front of this server sets X-Forwarded-For itself and nothing else can reach this
+    // server directly. See shared/utils/forwarded.ts.
+    trustForwardedFor: false,
   },
 
   app: {

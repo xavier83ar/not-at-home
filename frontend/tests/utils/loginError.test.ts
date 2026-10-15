@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { loginErrorMessage } from '~/utils/loginError'
 
-const problem = (status: number | undefined, code?: string) => ({
+const problem = (status: number | undefined, code?: string, retryAfterSeconds?: number) => ({
   status,
   detail: undefined,
   code,
+  retryAfterSeconds,
   fieldErrors: {},
 })
 
@@ -15,6 +16,13 @@ describe('loginErrorMessage', () => {
 
   it('leaves validation failures to the field errors', () => {
     expect(loginErrorMessage(problem(400))).toBeUndefined()
+  })
+
+  it('says how long to wait when there were too many attempts', () => {
+    expect(loginErrorMessage(problem(429, 'RATE_LIMITED', 6))).toBe(
+      'Too many attempts. Please wait 6 seconds and try again.',
+    )
+    expect(loginErrorMessage(problem(429))).toContain('wait a while')
   })
 
   it('says so when the account is banned', () => {

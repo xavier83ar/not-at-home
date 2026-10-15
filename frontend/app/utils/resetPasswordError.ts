@@ -1,4 +1,5 @@
 import type { ApiProblem } from '~/utils/problem'
+import { rateLimitMessage } from '~/utils/rateLimit'
 
 export interface ResetPasswordError {
   /** Shown above the form; undefined when the field errors beside the inputs say it all. */
@@ -20,6 +21,9 @@ export function resetPasswordError(problem: ApiProblem): ResetPasswordError {
       message: problem.detail ?? 'This password reset link is invalid or has expired.',
       requestNewLink: true,
     }
+  }
+  if (problem.status === 429) {
+    return { message: rateLimitMessage(problem.retryAfterSeconds), requestNewLink: false }
   }
   if (problem.status === 403) {
     return {

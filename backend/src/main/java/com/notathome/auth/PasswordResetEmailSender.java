@@ -3,6 +3,8 @@ package com.notathome.auth;
 import com.notathome.config.AppProperties;
 import com.notathome.mail.EmailTemplates;
 import com.notathome.mail.MailService;
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -24,17 +26,30 @@ class PasswordResetEmailSender {
   private final PasswordResetService passwordReset;
   private final MailService mailService;
   private final AppProperties properties;
+  private final RateLimiter rateLimiter;
 
   PasswordResetEmailSender(
-      PasswordResetService passwordReset, MailService mailService, AppProperties properties) {
+      PasswordResetService passwordReset,
+      MailService mailService,
+      AppProperties properties,
+      RateLimiter rateLimiter) {
     this.passwordReset = passwordReset;
     this.mailService = mailService;
     this.properties = properties;
+    this.rateLimiter = rateLimiter;
   }
 
   @Async
   @EventListener
   void handle(PasswordResetRequested event) {
+    // Per address, and before looking the address up: it counts for unknown addresses too, so what
+    // happens (and how long it takes) is the same for every address. Over the limit nothing is
+    // sent, and the request that asked is not told: it got its answer long ago.
+    if (!rateLimiter.tryConsume(
+        RateLimitPolicy.PASSWORD_RESET_ADDRESS, RateLimiter.emailKey(event.email()))) {
+      log.warn("A password reset request was dropped: too many for one address");
+      return;
+    }
     try {
       // The token is committed before the email goes out: the service call is its own transaction.
       passwordReset.createToken(event.email()).ifPresent(this::send);

@@ -1,9 +1,13 @@
 package com.notathome.auth;
 
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimiter;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -17,20 +21,38 @@ class EmailVerificationService {
 
   private final EmailVerificationTokenRepository tokens;
   private final UserRepository users;
+  private static final Logger log = LoggerFactory.getLogger(EmailVerificationService.class);
+
   private final ApplicationEventPublisher events;
+  private final RateLimiter rateLimiter;
 
   EmailVerificationService(
       EmailVerificationTokenRepository tokens,
       UserRepository users,
-      ApplicationEventPublisher events) {
+      ApplicationEventPublisher events,
+      RateLimiter rateLimiter) {
     this.tokens = tokens;
     this.users = users;
     this.events = events;
+    this.rateLimiter = rateLimiter;
+  }
+
+  /**
+   * The email sent at registration. Over the per-address limit it is skipped without a word: the
+   * person has just registered, and can ask again later.
+   */
+  @Transactional
+  public void sendVerificationEmail(User user) {
+    if (!rateLimiter.tryConsume(
+        RateLimitPolicy.VERIFICATION_EMAIL_ADDRESS, RateLimiter.emailKey(user.getEmail()))) {
+      log.warn("Verification email suppressed for user {}: too many for one address", user.getId());
+      return;
+    }
+    issueToken(user);
   }
 
   /** Creates a fresh token, voiding any earlier unused ones, and queues the email. */
-  @Transactional
-  public void sendVerificationEmail(User user) {
+  private void issueToken(User user) {
     tokens.deleteByUserIdAndUsedAtIsNull(user.getId());
     String token = SecureTokens.generate();
     tokens.save(
@@ -52,7 +74,10 @@ class EmailVerificationService {
             .findByIdAndDeletedAtIsNull(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
     if (!user.isEmailVerified()) {
-      sendVerificationEmail(user);
+      // Shares one budget per address with the registration email; here the user is told.
+      rateLimiter.consume(
+          RateLimitPolicy.VERIFICATION_EMAIL_ADDRESS, RateLimiter.emailKey(user.getEmail()));
+      issueToken(user);
     }
   }
 
