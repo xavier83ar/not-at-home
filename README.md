@@ -14,10 +14,14 @@ A web forum for outdoor enthusiasts. Nuxt frontend (SSR) and Spring Boot REST AP
 |---|---|
 | Java | 25 (LTS) |
 | Spring Boot | 4.1.1 |
+| Node | 24 (LTS), pinned in `frontend/.nvmrc` |
+| Nuxt | 4.6 (Vue 3, TypeScript) |
+| Bootstrap | 5.3 with BootstrapVueNext |
 
 ## Prerequisites
 
 - JDK 25 (not just the JRE)
+- Node 24 and npm (`nvm use` in `frontend/` picks the right version; current Nuxt needs Node 22.19+ or 24)
 - Docker with Compose (PostgreSQL and Mailpit in dev; Testcontainers in tests)
 
 ## Running in dev
@@ -25,7 +29,10 @@ A web forum for outdoor enthusiasts. Nuxt frontend (SSR) and Spring Boot REST AP
 ```sh
 make dev-db        # PostgreSQL (5432) and Mailpit (SMTP 1025, web UI http://localhost:8025)
 make dev-backend   # API on http://localhost:8080
+make dev-frontend  # site on http://localhost:3000 (run `npm install` in frontend/ the first time)
 ```
+
+Open <http://localhost:3000>. The browser only talks to the frontend; `/api/**` is proxied to the backend (set `NUXT_BACKEND_URL` if it is not on `localhost:8080`).
 
 `make dev-backend` runs with the `dev` profile (the default), which also starts the Compose services by itself if they are not up.
 
@@ -38,11 +45,19 @@ Handy URLs while developing:
 ## Tests, formatting and images
 
 ```sh
-make test      # backend tests (Testcontainers) and format check
-make images    # production images
+make test      # backend tests (Testcontainers) and format check; frontend lint, type check and tests
+make images    # production images (backend with Buildpacks, frontend with its Dockerfile)
 ```
 
-Format the backend with `cd backend && ./mvnw spotless:apply`.
+Format the backend with `cd backend && ./mvnw spotless:apply` and the frontend with `cd frontend && npm run format`.
+
+### API types
+
+The frontend's TypeScript types are generated from the backend's OpenAPI spec and committed in `frontend/app/types/api.d.ts`. After changing the API, start the backend and run:
+
+```sh
+make api-types
+```
 
 ## Configuration
 
@@ -52,7 +67,7 @@ Production images read their settings from environment variables; see [`.env.exa
 
 ```
 backend/      Spring Boot app (Maven wrapper)
-frontend/     Nuxt app (coming next)
+frontend/     Nuxt app + Dockerfile
 docs/         requirements, plan, layout references
 design/       brand identity and assets
 compose.yaml  local dependencies: PostgreSQL, Mailpit

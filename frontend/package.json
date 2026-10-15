@@ -1,0 +1,45 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "nuxt typecheck",
+    "test": "vitest run",
+    "api:types": "openapi-typescript ${NUXT_BACKEND_URL:-http://localhost:8080}/api/v3/api-docs -o app/types/api.d.ts"
+  },
+  "dependencies": {
+    "@bootstrap-vue-next/nuxt": "^1.0.0",
+    "@nuxtjs/color-mode": "^4.0.1",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.2",
+    "bootstrap-vue-next": "^1.2.2",
+    "nuxt": "^4.6.1",
+    "vue": "^3.5.43",
+    "vue-router": "^5.4.0"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.17.0",
+    "@nuxt/fonts": "^1.0.1",
+    "@vitejs/plugin-vue": "^6.0.10",
+    "@vue/test-utils": "^2.5.1",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "happy-dom": "^21.0.1",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.10",
+    "sass": "^1.105.1",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.4",
+    "vue-tsc": "^3.3.13"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  }
+}
