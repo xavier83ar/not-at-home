@@ -1,5 +1,4 @@
-<script setup lang="ts">
-</script>
+<script setup lang="ts"></script>
 <template>
   <header class="border-bottom bg-body">
     <BNavbar class="container py-2" toggleable="md">
@@ -40,14 +39,13 @@
 </template>
 
 <style lang="scss" scoped>
-@import "bootstrap/scss/functions";
-@import "bootstrap/scss/variables";
-@import "bootstrap/scss/mixins";
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
 
 @include media-breakpoint-up('md') {
   .search-box {
     max-width: 28rem;
   }
 }
-
 </style>

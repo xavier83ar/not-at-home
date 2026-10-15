@@ -142,6 +142,11 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<name>not-at-home-backend:${project.version}</name>
+					</image>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>

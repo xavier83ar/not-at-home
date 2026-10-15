@@ -19,4 +19,4 @@ test:
 
 images:
 	cd backend && ./mvnw spring-boot:build-image
-	docker build -t notathome-frontend frontend
+	docker build -t not-at-home-frontend frontend
