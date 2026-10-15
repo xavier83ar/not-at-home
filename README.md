@@ -64,9 +64,12 @@ make api-types
 Login uses server-side sessions kept in PostgreSQL (Spring Session). The browser holds two cookies:
 
 - `SESSION`: the session id (`HttpOnly`, `SameSite=Lax`, `Secure` in production).
+- `remember-me`: only if the user ticked "Keep me logged in" (`HttpOnly`, `SameSite=Lax`, 30 days). It brings the session back after the browser was closed. The cookie holds a random series and token that change every time it is used; the current pair lives in the `persistent_logins` table, so a copied cookie stops working as soon as the real owner comes back. Reusing an old token revokes all of that user's remembered logins, except that the previous token still works for 10 seconds: a browser that restores several tabs after a restart sends the same cookie from all of them at once, and that must not look like theft. Logging out forgets them on every device.
 - `XSRF-TOKEN`: the CSRF token. JavaScript reads it and sends it back in the `X-XSRF-TOKEN` header on every request that changes state. The backend only issues it on demand (`GET /api/csrf`).
 
-In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): it forwards the session cookie during SSR and adds the CSRF header by itself. `useAuth()` exposes the current user (loaded on every server-side render), `login()` and `logout()`. Backend tests should send the token with `com.notathome.support.Csrf.token(mockMvc)`, not `csrf()` from spring-security-test.
+Banned accounts can't log in: the right password gets a 403 with code `ACCOUNT_BANNED`, a wrong one the usual 401, so a ban is never visible to someone who doesn't know the password. Their remember-me cookies are rejected and cleared. (The ban action itself comes with the admin panel; until then, `UPDATE users SET status = 'BANNED' WHERE username = '...'`.)
+
+In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): it forwards the visitor's cookies during SSR (keeping them up to date within one render, which remember-me needs) and adds the CSRF header by itself. `useAuth()` exposes the current user (loaded on every server-side render), `login()` and `logout()`. Backend tests should send the token with `com.notathome.support.Csrf.token(mockMvc)`, not `csrf()` from spring-security-test.
 
 ### Accounts in dev
 

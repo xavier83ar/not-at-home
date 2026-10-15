@@ -34,6 +34,21 @@ public final class Accounts {
         .andReturn();
   }
 
+  /** A login done the way the browser does it: CSRF cookie first, then the token in a header. */
+  public static MvcResult login(MockMvc mockMvc, String login, String password, boolean rememberMe)
+      throws Exception {
+    String json =
+        "{\"login\":\"%s\",\"password\":\"%s\",\"rememberMe\":%s}"
+            .formatted(login, password, rememberMe);
+    return mockMvc
+        .perform(
+            post("/api/auth/login")
+                .with(Csrf.token(mockMvc))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andReturn();
+  }
+
   /** Like a browser: when a response sets the same cookie twice, the last one wins. */
   public static Cookie lastCookie(MvcResult result, String name) {
     Cookie found = null;

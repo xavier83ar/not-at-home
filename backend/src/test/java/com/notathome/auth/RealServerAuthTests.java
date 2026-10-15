@@ -39,6 +39,7 @@ class RealServerAuthTests {
 
   @BeforeEach
   void createUser() {
+    jdbc.update("delete from persistent_logins");
     jdbc.update("delete from spring_session");
     jdbc.update("delete from users");
     users.save(
@@ -91,6 +92,61 @@ class RealServerAuthTests {
                     .startsWith("SESSION=")
                     .contains("HttpOnly")
                     .contains("SameSite=Lax"));
+  }
+
+  @Test
+  void rememberMeCookieIsHttpOnlySameSiteLaxAndLastsThirtyDays() throws Exception {
+    String xsrf = tokenFrom(send(request("/api/csrf").GET()));
+
+    HttpResponse<String> response =
+        send(
+            request("/api/auth/login")
+                .header("Content-Type", "application/json")
+                .header("Cookie", "XSRF-TOKEN=" + xsrf)
+                .header("X-XSRF-TOKEN", xsrf)
+                .POST(
+                    BodyPublishers.ofString(
+                        "{\"login\":\"alice\",\"password\":\"secret-pw\",\"rememberMe\":true}")));
+
+    assertThat(response.statusCode()).isEqualTo(200);
+    assertThat(response.headers().allValues("Set-Cookie"))
+        .anySatisfy(
+            cookie ->
+                assertThat(cookie)
+                    .startsWith("remember-me=")
+                    .contains("HttpOnly")
+                    .contains("SameSite=Lax")
+                    .contains("Max-Age=2592000")
+                    .contains("Path=/"));
+  }
+
+  @Test
+  void theRememberMeCookieAloneBringsTheSessionBack() throws Exception {
+    String xsrf = tokenFrom(send(request("/api/csrf").GET()));
+    HttpResponse<String> login =
+        send(
+            request("/api/auth/login")
+                .header("Content-Type", "application/json")
+                .header("Cookie", "XSRF-TOKEN=" + xsrf)
+                .header("X-XSRF-TOKEN", xsrf)
+                .POST(
+                    BodyPublishers.ofString(
+                        "{\"login\":\"alice\",\"password\":\"secret-pw\",\"rememberMe\":true}")));
+    String rememberMe =
+        login.headers().allValues("Set-Cookie").stream()
+            .filter(cookie -> cookie.startsWith("remember-me="))
+            .map(cookie -> cookie.substring(0, cookie.indexOf(';')))
+            .findFirst()
+            .orElseThrow();
+
+    // A browser restart: no SESSION cookie, only the persistent one.
+    HttpResponse<String> me = send(request("/api/me").header("Cookie", rememberMe).GET());
+
+    assertThat(me.statusCode()).isEqualTo(200);
+    assertThat(me.body()).contains("\"username\":\"alice\"");
+    assertThat(me.headers().allValues("Set-Cookie"))
+        .anySatisfy(cookie -> assertThat(cookie).startsWith("SESSION=").contains("HttpOnly"))
+        .anySatisfy(cookie -> assertThat(cookie).startsWith("remember-me=").contains("HttpOnly"));
   }
 
   @Test

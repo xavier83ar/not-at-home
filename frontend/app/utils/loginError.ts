@@ -11,7 +11,10 @@ export function loginErrorMessage(problem: ApiProblem): string | undefined {
     case 401:
       return 'Invalid username or password.'
     case 403:
-      return 'Your session expired. Reload the page and try again.'
+      // Two kinds of 403: a banned account (has a code), or a rejected CSRF token (has none).
+      return problem.code === 'ACCOUNT_BANNED'
+        ? 'This account has been banned.'
+        : 'Your session expired. Reload the page and try again.'
     default:
       return 'Something went wrong. Please try again.'
   }
