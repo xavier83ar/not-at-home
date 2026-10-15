@@ -1,5 +1,7 @@
 package com.notathome.auth;
 
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimited;
 import com.notathome.users.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,6 +30,7 @@ class RegistrationController {
    * (FR-1.9). Field problems come back as 400 with an {@code errors} map.
    */
   @PostMapping("/api/auth/register")
+  @RateLimited(RateLimitPolicy.REGISTER)
   @ResponseStatus(HttpStatus.CREATED)
   CurrentUserResponse register(
       @Valid @RequestBody RegisterRequest body,

@@ -8,13 +8,15 @@ const visible = computed(
 )
 
 const status = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
+const errorMessage = ref('')
 
 async function onResend() {
   status.value = 'sending'
   try {
     await resendVerification()
     status.value = 'sent'
-  } catch {
+  } catch (error) {
+    errorMessage.value = resendErrorMessage(parseProblem(error))
     status.value = 'error'
   }
 }
@@ -28,7 +30,7 @@ async function onResend() {
         >. Check your inbox (and spam folder).
       </span>
       <span v-else-if="status === 'error'" role="alert">
-        Could not send the email. Please try again in a moment.
+        {{ errorMessage }}
       </span>
       <span v-else>
         Verify your email address to start posting. We sent a link to

@@ -22,12 +22,20 @@ spring:
       initialize-schema: never
 
 app:
+  rate-limit:
+    # Only switch off for local testing (APP_RATE_LIMIT_ENABLED=false).
+    enabled: true
   # Public address of the site (no trailing slash); links in emails point here.
   frontend-url: http://localhost:3000
   mail:
     from: noreply@notathome.local
 
 server:
+  # Behind the frontend's proxy the backend sees the frontend's address, not the visitor's.
+  # "native" lets Tomcat read the proxy's X-Forwarded-For/-Proto/-Host, but only from proxies it
+  # trusts (loopback and private network addresses by default; override with the environment
+  # variable SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES). The rate limits depend on this: see README.
+  forward-headers-strategy: native
   servlet:
     session:
       cookie:

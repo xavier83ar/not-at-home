@@ -8,6 +8,8 @@ export interface ApiProblem {
    * two 403s apart: a rejected CSRF token has none.
    */
   code: string | undefined
+  /** For 429 (too many requests): how long to wait, in seconds, when the backend said. */
+  retryAfterSeconds?: number
   /** Validation messages keyed by field name; empty unless the backend sent field errors. */
   fieldErrors: Record<string, string[]>
 }
@@ -15,7 +17,7 @@ export interface ApiProblem {
 interface FetchErrorLike {
   status?: number
   statusCode?: number
-  data?: { detail?: unknown; code?: unknown; errors?: unknown }
+  data?: { detail?: unknown; code?: unknown; retryAfterSeconds?: unknown; errors?: unknown }
 }
 
 /** Reads the backend's RFC 9457 `ProblemDetail` out of an error thrown by `$api`. */
@@ -32,6 +34,8 @@ export function parseProblem(error: unknown): ApiProblem {
     status: e.status ?? e.statusCode,
     detail: typeof data.detail === 'string' ? data.detail : undefined,
     code: typeof data.code === 'string' ? data.code : undefined,
+    retryAfterSeconds:
+      typeof data.retryAfterSeconds === 'number' ? data.retryAfterSeconds : undefined,
     fieldErrors,
   }
 }

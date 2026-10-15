@@ -1,6 +1,8 @@
 package com.notathome.auth;
 
 import com.notathome.common.MaxUtf8Bytes;
+import com.notathome.ratelimit.RateLimitPolicy;
+import com.notathome.ratelimit.RateLimited;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -47,6 +49,7 @@ class PasswordResetController {
    * belongs to an account, so this can't be used to find out who is registered (FR-1.8).
    */
   @PostMapping("/api/auth/forgot-password")
+  @RateLimited(RateLimitPolicy.FORGOT_PASSWORD)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   void forgotPassword(@Valid @RequestBody ForgotPasswordRequest body) {
     passwordReset.request(body.email());
@@ -58,6 +61,7 @@ class PasswordResetController {
    * message for a bad link.
    */
   @PostMapping("/api/auth/reset-password")
+  @RateLimited(RateLimitPolicy.RESET_PASSWORD)
   @ResponseStatus(HttpStatus.NO_CONTENT)
   void resetPassword(
       @Valid @RequestBody ResetPasswordRequest body,

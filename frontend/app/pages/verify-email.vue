@@ -17,6 +17,7 @@ const failure = ref(
 )
 
 const resendState = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
+const resendError = ref('')
 
 async function onVerify() {
   if (!token.value) return
@@ -25,7 +26,7 @@ async function onVerify() {
     await verifyEmail(token.value)
     state.value = 'verified'
   } catch (error) {
-    failure.value = parseProblem(error).detail ?? 'Something went wrong. Please try again.'
+    failure.value = verifyErrorMessage(parseProblem(error))
     state.value = 'failed'
   }
 }
@@ -35,7 +36,8 @@ async function onResend() {
   try {
     await resendVerification()
     resendState.value = 'sent'
-  } catch {
+  } catch (error) {
+    resendError.value = resendErrorMessage(parseProblem(error))
     resendState.value = 'error'
   }
 }
@@ -77,7 +79,7 @@ async function onResend() {
           Send me a new link
         </BButton>
         <p v-if="resendState === 'error'" class="text-danger mt-2" role="alert">
-          Could not send the email. Please try again in a moment.
+          {{ resendError }}
         </p>
       </template>
       <p v-else-if="!isLoggedIn">

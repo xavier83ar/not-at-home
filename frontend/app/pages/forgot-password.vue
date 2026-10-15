@@ -27,7 +27,12 @@ async function onSubmit() {
   } catch (error) {
     const problem = parseProblem(error)
     fieldErrors.value = problem.fieldErrors
-    message.value = problem.status === 400 ? undefined : 'Something went wrong. Please try again.'
+    message.value =
+      problem.status === 400
+        ? undefined
+        : problem.status === 429
+          ? rateLimitMessage(problem.retryAfterSeconds)
+          : 'Something went wrong. Please try again.'
   } finally {
     submitting.value = false
   }

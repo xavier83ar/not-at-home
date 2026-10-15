@@ -3,8 +3,18 @@ import { resetPasswordError } from '~/utils/resetPasswordError'
 
 const problem = (
   status: number | undefined,
-  extra: { detail?: string; fieldErrors?: Record<string, string[]> } = {},
-) => ({ status, detail: extra.detail, code: undefined, fieldErrors: extra.fieldErrors ?? {} })
+  extra: {
+    detail?: string
+    fieldErrors?: Record<string, string[]>
+    retryAfterSeconds?: number
+  } = {},
+) => ({
+  status,
+  detail: extra.detail,
+  code: undefined,
+  retryAfterSeconds: extra.retryAfterSeconds,
+  fieldErrors: extra.fieldErrors ?? {},
+})
 
 describe('resetPasswordError', () => {
   it('leaves a bad password to the field errors and keeps the link', () => {
@@ -26,6 +36,13 @@ describe('resetPasswordError', () => {
 
   it('has its own message for a bad link when the backend sent none', () => {
     expect(resetPasswordError(problem(400)).message).toContain('invalid or has expired')
+  })
+
+  it('says how long to wait when there were too many attempts, and keeps the link', () => {
+    expect(resetPasswordError(problem(429, { retryAfterSeconds: 3600 }))).toEqual({
+      message: 'Too many attempts. Please wait 1 hour and try again.',
+      requestNewLink: false,
+    })
   })
 
   it('tells people to reload when the CSRF token was rejected', () => {

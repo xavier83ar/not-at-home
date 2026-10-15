@@ -69,6 +69,8 @@ Login uses server-side sessions kept in PostgreSQL (Spring Session). The browser
 
 Banned accounts can't log in: the right password gets a 403 with code `ACCOUNT_BANNED`, a wrong one the usual 401, so a ban is never visible to someone who doesn't know the password. Their remember-me cookies are rejected and cleared. (The ban action itself comes with the admin panel; until then, `UPDATE users SET status = 'BANNED' WHERE username = '...'`.)
 
+Pages that need a login or an admin use the route middleware: `definePageMeta({ middleware: 'auth' })` or `'admin'`. Guests are sent to the login page and back afterwards; a logged-in user without the right role gets a 403 (also from the server render). The middleware only decides what is shown: the backend checks permissions on every request.
+
 In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): it forwards the visitor's cookies during SSR (keeping them up to date within one render, which remember-me needs) and adds the CSRF header by itself. `useAuth()` exposes the current user (loaded on every server-side render), `login()` and `logout()`. Backend tests should send the token with `com.notathome.support.Csrf.token(mockMvc)`, not `csrf()` from spring-security-test.
 
 ### Accounts in dev
@@ -85,6 +87,33 @@ UPDATE users SET email_verified_at = now() WHERE username = 'alice';
 ```
 
 For backend code, mark endpoints that need a verified email with `@RequiresVerifiedEmail` (checked against the database on every call, so verifying takes effect in sessions that are already open). Verification links expire after 24 hours and work once; only their hashes are stored.
+
+## Rate limits
+
+Requests that can be abused are limited (NFR-2). Over a limit the answer is `429` with a `Retry-After` header and, in the body, `code: RATE_LIMITED` and `retryAfterSeconds`; the forms show how long to wait. Limits refill continuously (5 per hour is one every 12 minutes) and live in memory, which is enough for one backend instance.
+
+| Limit | Applies to |
+|---|---|
+| 10 per minute, per client | log in |
+| 5 per hour, per client | sign up, ask for a password reset |
+| 10 per hour, per client | reset a password, resend the verification email |
+| 30 per hour, per client | verify an email address |
+| 5 per hour, per email address | verification emails: the one at sign-up plus every resend |
+| 3 per hour, per email address | password reset emails; over the limit nothing is sent and the request isn't told, so the answer never reveals whether an address has an account |
+
+Add `@RateLimited(RateLimitPolicy.X)` to an endpoint to limit it per client (a new policy is one line in `RateLimitPolicy`; posting will get one in M4). Requests rejected by CSRF protection don't count, reads are never limited, and malformed requests do count.
+
+In local testing you may legitimately sign up or log in more than that. Start the backend with `APP_RATE_LIMIT_ENABLED=false` to switch the limits off (the backend's own tests do this too, except the ones about the limits).
+
+### Which client? (read this before deploying)
+
+Every request reaches the backend from the frontend server, so the backend has to be *told* who the visitor is, and it must not believe visitors who lie about it:
+
+- The frontend's `/api` proxy and its server-side rendering **replace** `X-Forwarded-For` with one address, the one that connected to the frontend (`frontend/shared/utils/forwarded.ts`). Whatever the visitor sent is discarded.
+- The backend reads that header with Tomcat's `RemoteIpValve` (`server.forward-headers-strategy: native`), and only from proxies it trusts: loopback and private network addresses by default. If the frontend reaches the backend from a public address, list it in `SERVER_TOMCAT_REMOTEIP_INTERNAL_PROXIES` (a regular expression; it replaces the default list).
+- **The backend must not be reachable from the internet except through the frontend.** Anyone who can call it directly from a trusted address can claim to be any client.
+- If a reverse proxy sits in front of the frontend (TLS termination, a load balancer), set `NUXT_TRUST_FORWARDED_FOR=true` on the frontend, so it takes the visitor's address from the **last** entry of `X-Forwarded-For`, the one the proxy appended. Only do this if that proxy sets the header itself and nothing can reach the frontend directly; otherwise visitors could pick their own address. Without it, every visitor would count as the proxy.
+- IPv6 visitors are limited by their /64 (the first 64 bits), because one customer can switch addresses inside it at will.
 
 ## Continuous integration
 

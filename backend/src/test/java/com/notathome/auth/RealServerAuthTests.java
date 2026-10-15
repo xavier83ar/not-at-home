@@ -27,7 +27,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  * the error dispatch that Tomcat does for {@code sendError}; both matter for security here.
  */
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    webEnvironment = WebEnvironment.RANDOM_PORT,
+    properties = "app.rate-limit.enabled=false")
 class RealServerAuthTests {
 
   @LocalServerPort int port;

@@ -22,14 +22,15 @@ async function onSubmit() {
   fieldErrors.value = {}
   try {
     await register({ ...form })
-    await navigateTo('/')
   } catch (error) {
     const problem = parseProblem(error)
     fieldErrors.value = problem.fieldErrors
     message.value = registerErrorMessage(problem)
+    return
   } finally {
     submitting.value = false
   }
+  await navigateTo('/')
 }
 </script>
 
