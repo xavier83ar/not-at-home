@@ -64,9 +64,10 @@ async function onSubmit() {
         :errors="fieldErrors.password"
       />
 
-      <BFormCheckbox v-model="form.rememberMe" name="rememberMe" class="mb-3">
+      <BFormCheckbox v-model="form.rememberMe" name="rememberMe" class="mb-2">
         Keep me logged in on this device for 30 days
       </BFormCheckbox>
+      <p class="mb-3"><NuxtLink to="/forgot-password">Forgot your password?</NuxtLink></p>
 
       <BButton
         type="submit"

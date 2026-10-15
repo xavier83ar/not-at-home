@@ -73,6 +73,10 @@ public class User {
     return passwordHash;
   }
 
+  public void changePasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
+
   public String getDisplayName() {
     return displayName;
   }

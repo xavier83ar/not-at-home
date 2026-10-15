@@ -15,15 +15,23 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 public class RecordingMailSender extends JavaMailSenderImpl {
 
   /** One sent email, with its bodies already extracted. */
-  public record Sent(String from, String to, String subject, String text, String html) {
-
-    private static final Pattern TOKEN_LINK = Pattern.compile("/verify-email\\?token=([\\w-]+)");
+  public record Sent(
+      String from, String to, String subject, String text, String html, String thread) {
 
     /** The token in the first verification link of the plain-text body. */
     public String verificationToken() {
-      Matcher matcher = TOKEN_LINK.matcher(text);
+      return linkToken("/verify-email");
+    }
+
+    /** The token in the first password reset link of the plain-text body. */
+    public String resetToken() {
+      return linkToken("/reset-password");
+    }
+
+    private String linkToken(String path) {
+      Matcher matcher = Pattern.compile(path + "\\?token=([\\w-]+)").matcher(text);
       if (!matcher.find()) {
-        throw new AssertionError("No verification link in: " + text);
+        throw new AssertionError("No " + path + " link in: " + text);
       }
       return matcher.group(1);
     }
@@ -67,7 +75,8 @@ public class RecordingMailSender extends JavaMailSenderImpl {
                 ((InternetAddress) message.getAllRecipients()[0]).getAddress(),
                 message.getSubject(),
                 text.toString(),
-                html.toString()));
+                html.toString(),
+                Thread.currentThread().getName()));
       }
     } catch (Exception e) {
       throw new MailSendException("Could not read the test message", e);
