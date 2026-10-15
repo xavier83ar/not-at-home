@@ -4,6 +4,10 @@ spring:
     default: dev
   application:
     name: not-at-home
+  web:
+    # English only (NFR-7): validation messages must not follow the server or browser language.
+    locale: en
+    locale-resolver: fixed
   jpa:
     open-in-view: false
   session:

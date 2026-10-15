@@ -66,6 +66,20 @@ $theme-colors: map-merge(
     --bs-btn-disabled-bg: #{$pine-light};
     --bs-btn-disabled-border-color: #{$pine-light};
   }
+
+  // Outline buttons keep Pine light text and border, with black text once filled (hover/active).
+  .btn-outline-primary {
+    --bs-btn-color: #{$pine-light};
+    --bs-btn-border-color: #{$pine-light};
+    --bs-btn-hover-color: #{$ink};
+    --bs-btn-hover-bg: #{$pine-light};
+    --bs-btn-hover-border-color: #{$pine-light};
+    --bs-btn-active-color: #{$ink};
+    --bs-btn-active-bg: #{$pine-light};
+    --bs-btn-active-border-color: #{$pine-light};
+    --bs-btn-disabled-color: #{$pine-light};
+    --bs-btn-disabled-border-color: #{$pine-light};
+  }
 }
 
 // Logo swaps with the color mode.

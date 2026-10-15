@@ -1,0 +1,41 @@
+export interface ApiProblem {
+  /** HTTP status, or undefined when the request never got a response (network error). */
+  status: number | undefined
+  /** The backend's `detail` text, when there is one. */
+  detail: string | undefined
+  /** Validation messages keyed by field name; empty unless the backend sent field errors. */
+  fieldErrors: Record<string, string[]>
+}
+
+interface FetchErrorLike {
+  status?: number
+  statusCode?: number
+  data?: { detail?: unknown; errors?: unknown }
+}
+
+/** Reads the backend's RFC 9457 `ProblemDetail` out of an error thrown by `$api`. */
+export function parseProblem(error: unknown): ApiProblem {
+  const e = (error ?? {}) as FetchErrorLike
+  const data = e.data ?? {}
+  const fieldErrors: Record<string, string[]> = {}
+  if (data.errors && typeof data.errors === 'object') {
+    for (const [field, messages] of Object.entries(data.errors)) {
+      if (Array.isArray(messages)) fieldErrors[field] = messages.map(String)
+    }
+  }
+  return {
+    status: e.status ?? e.statusCode,
+    detail: typeof data.detail === 'string' ? data.detail : undefined,
+    fieldErrors,
+  }
+}
+
+/**
+ * Only follow redirects to a path on this site. `//evil.example` and `https://...` would turn the
+ * `?redirect=` parameter into an open redirect.
+ */
+export function safeRedirect(target: unknown, fallback = '/'): string {
+  if (typeof target !== 'string') return fallback
+  if (!target.startsWith('/') || target.startsWith('//') || target.includes('\\')) return fallback
+  return target
+}
