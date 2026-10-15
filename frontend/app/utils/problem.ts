@@ -3,6 +3,11 @@ export interface ApiProblem {
   status: number | undefined
   /** The backend's `detail` text, when there is one. */
   detail: string | undefined
+  /**
+   * A machine-readable reason some errors carry, e.g. `EMAIL_NOT_VERIFIED`. Lets the frontend tell
+   * two 403s apart: a rejected CSRF token has none.
+   */
+  code: string | undefined
   /** Validation messages keyed by field name; empty unless the backend sent field errors. */
   fieldErrors: Record<string, string[]>
 }
@@ -10,7 +15,7 @@ export interface ApiProblem {
 interface FetchErrorLike {
   status?: number
   statusCode?: number
-  data?: { detail?: unknown; errors?: unknown }
+  data?: { detail?: unknown; code?: unknown; errors?: unknown }
 }
 
 /** Reads the backend's RFC 9457 `ProblemDetail` out of an error thrown by `$api`. */
@@ -26,6 +31,7 @@ export function parseProblem(error: unknown): ApiProblem {
   return {
     status: e.status ?? e.statusCode,
     detail: typeof data.detail === 'string' ? data.detail : undefined,
+    code: typeof data.code === 'string' ? data.code : undefined,
     fieldErrors,
   }
 }

@@ -8,28 +8,17 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.security.web.authentication.logout.CompositeLogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy;
-import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.security.web.csrf.CsrfAuthenticationStrategy;
 import org.springframework.security.web.csrf.CsrfLogoutHandler;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,36 +26,23 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-/**
- * JSON login and logout. Spring Security does not do the session work for a custom login endpoint,
- * so this controller runs the steps a login filter would: fixation protection, CSRF token rotation,
- * and saving the security context into the session.
- */
+/** JSON login and logout. */
 @RestController
 class AuthController {
 
   private final AuthenticationManager authenticationManager;
   private final UserRepository users;
-  private final SessionAuthenticationStrategy sessionStrategy;
+  private final SessionLogin sessionLogin;
   private final LogoutHandler logoutHandler;
-  private final SecurityContextRepository securityContextRepository =
-      new HttpSessionSecurityContextRepository();
-  private final SecurityContextHolderStrategy securityContextHolderStrategy =
-      SecurityContextHolder.getContextHolderStrategy();
 
   AuthController(
       AuthenticationManager authenticationManager,
       UserRepository users,
-      CsrfTokenRepository csrfTokenRepository,
-      CsrfTokenRequestHandler csrfTokenRequestHandler) {
+      SessionLogin sessionLogin,
+      CsrfTokenRepository csrfTokenRepository) {
     this.authenticationManager = authenticationManager;
     this.users = users;
-
-    CsrfAuthenticationStrategy csrfStrategy = new CsrfAuthenticationStrategy(csrfTokenRepository);
-    csrfStrategy.setRequestHandler(csrfTokenRequestHandler);
-    this.sessionStrategy =
-        new CompositeSessionAuthenticationStrategy(
-            List.of(new ChangeSessionIdAuthenticationStrategy(), csrfStrategy));
+    this.sessionLogin = sessionLogin;
     this.logoutHandler =
         new CompositeLogoutHandler(
             new CsrfLogoutHandler(csrfTokenRepository), new SecurityContextLogoutHandler());
@@ -101,15 +77,7 @@ class AuthController {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password");
     }
 
-    // Order matters: fixation protection first, so the context is saved into the new session.
-    sessionStrategy.onAuthentication(authentication, request, response);
-    SecurityContext context = securityContextHolderStrategy.createEmptyContext();
-    context.setAuthentication(authentication);
-    securityContextHolderStrategy.setContext(context);
-    securityContextRepository.saveContext(context, request, response);
-
-    // The CSRF strategy discarded the old token; load the replacement so its cookie is sent now.
-    ((CsrfToken) request.getAttribute(CsrfToken.class.getName())).getToken();
+    sessionLogin.start(authentication, request, response);
 
     AuthUser principal = (AuthUser) authentication.getPrincipal();
     User user = users.findByIdAndDeletedAtIsNull(principal.getId()).orElseThrow();

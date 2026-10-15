@@ -4,6 +4,12 @@ spring:
     default: dev
   application:
     name: not-at-home
+  mail:
+    properties:
+      # A slow or dead mail server must not hang requests.
+      "mail.smtp.connectiontimeout": 5000
+      "mail.smtp.timeout": 5000
+      "mail.smtp.writetimeout": 5000
   web:
     # English only (NFR-7): validation messages must not follow the server or browser language.
     locale: en
@@ -14,6 +20,12 @@ spring:
     jdbc:
       # Tables are created by Flyway (see db/migration).
       initialize-schema: never
+
+app:
+  # Public address of the site (no trailing slash); links in emails point here.
+  frontend-url: http://localhost:3000
+  mail:
+    from: noreply@notathome.local
 
 server:
   servlet:

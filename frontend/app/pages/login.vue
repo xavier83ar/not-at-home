@@ -47,38 +47,36 @@ async function onSubmit() {
     </BAlert>
 
     <BForm method="post" novalidate @submit.prevent="onSubmit">
-      <BFormGroup label="Username or email" label-for="login" class="mb-3">
-        <BFormInput
-          id="login"
-          v-model="form.login"
-          autocomplete="username"
-          autofocus
-          required
-          :state="fieldErrors.login ? false : null"
-        />
-        <BFormInvalidFeedback :state="fieldErrors.login ? false : null">
-          {{ fieldErrors.login?.[0] }}
-        </BFormInvalidFeedback>
-      </BFormGroup>
+      <FormTextField
+        id="login"
+        v-model="form.login"
+        label="Username or email"
+        autocomplete="username"
+        autofocus
+        :errors="fieldErrors.login"
+      />
+      <FormTextField
+        id="password"
+        v-model="form.password"
+        label="Password"
+        type="password"
+        autocomplete="current-password"
+        :errors="fieldErrors.password"
+      />
 
-      <BFormGroup label="Password" label-for="password" class="mb-4">
-        <BFormInput
-          id="password"
-          v-model="form.password"
-          type="password"
-          autocomplete="current-password"
-          required
-          :state="fieldErrors.password ? false : null"
-        />
-        <BFormInvalidFeedback :state="fieldErrors.password ? false : null">
-          {{ fieldErrors.password?.[0] }}
-        </BFormInvalidFeedback>
-      </BFormGroup>
-
-      <BButton type="submit" variant="primary" class="w-100" :disabled="submitting || !hydrated">
+      <BButton
+        type="submit"
+        variant="primary"
+        class="w-100 mt-2"
+        :disabled="submitting || !hydrated"
+      >
         {{ submitting ? 'Logging in…' : 'Log in' }}
       </BButton>
     </BForm>
+
+    <p class="mt-4 mb-0 text-center">
+      New here? <NuxtLink to="/register">Create an account</NuxtLink>
+    </p>
   </section>
 </template>
 

@@ -1,6 +1,7 @@
 import type { components } from '~/types/api'
 
 export type CurrentUser = components['schemas']['CurrentUserResponse']
+export type RegisterInput = components['schemas']['RegisterRequest']
 
 /**
  * The logged-in user. The state is filled during SSR by `plugins/auth.ts` and travels to the
@@ -31,6 +32,22 @@ export function useAuth() {
     })
   }
 
+  /** Creates the account and logs it in. Throws the `$api` error on failure (field errors: 400). */
+  async function register(input: RegisterInput) {
+    user.value = await $api<CurrentUser>('/api/auth/register', { method: 'POST', body: input })
+  }
+
+  /** Confirms an address with the token from the email link. Works logged in or not. */
+  async function verifyEmail(token: string) {
+    await $api('/api/auth/verify-email', { method: 'POST', body: { token } })
+    // If this browser is logged in, it should see the account as verified right away.
+    if (user.value) await fetchUser()
+  }
+
+  async function resendVerification() {
+    await $api('/api/auth/resend-verification', { method: 'POST' })
+  }
+
   async function logout() {
     try {
       await $api('/api/auth/logout', { method: 'POST' })
@@ -39,5 +56,14 @@ export function useAuth() {
     }
   }
 
-  return { user, isLoggedIn: computed(() => user.value !== null), fetchUser, login, logout }
+  return {
+    user,
+    isLoggedIn: computed(() => user.value !== null),
+    fetchUser,
+    login,
+    register,
+    verifyEmail,
+    resendVerification,
+    logout,
+  }
 }

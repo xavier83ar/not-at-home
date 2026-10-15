@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.notathome.TestcontainersConfiguration;
 import com.notathome.support.Csrf;
+import com.notathome.support.IntegrationTest;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
 import com.notathome.users.UserRole;
@@ -19,9 +19,6 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -29,9 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@Import(TestcontainersConfiguration.class)
-@SpringBootTest
-@AutoConfigureMockMvc
+@IntegrationTest
 class AuthenticationTests {
 
   static final String PASSWORD = "correct horse";

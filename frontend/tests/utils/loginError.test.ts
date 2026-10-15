@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { loginErrorMessage } from '~/utils/loginError'
 
-const problem = (status: number | undefined) => ({ status, detail: undefined, fieldErrors: {} })
+const problem = (status: number | undefined) => ({
+  status,
+  detail: undefined,
+  code: undefined,
+  fieldErrors: {},
+})
 
 describe('loginErrorMessage', () => {
   it('says the credentials were wrong on a 401', () => {
