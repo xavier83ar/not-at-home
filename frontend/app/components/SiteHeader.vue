@@ -1,4 +1,6 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const { user } = useAuth()
+</script>
 <template>
   <header class="border-bottom bg-body">
     <BNavbar class="container py-2" toggleable="md">
@@ -26,11 +28,15 @@
           />
         </form>
 
-        <!-- New topic and user menu placeholders; wired up in M1/M4. -->
         <div class="d-flex align-items-center gap-2 ms-md-3">
+          <!-- Enabled in M4, once topics exist. -->
           <BButton :variant="null" class="btn-accent" size="sm" disabled>New topic</BButton>
-          <BButton variant="outline-primary" size="sm" disabled>Log in</BButton>
-          <BButton variant="primary" size="sm" disabled>Sign up</BButton>
+          <UserMenu v-if="user" />
+          <template v-else>
+            <NuxtLink to="/login" class="btn btn-outline-primary btn-sm">Log in</NuxtLink>
+            <!-- Enabled when the Register page lands. -->
+            <BButton variant="primary" size="sm" disabled>Sign up</BButton>
+          </template>
           <ThemeToggle />
         </div>
       </BCollapse>
