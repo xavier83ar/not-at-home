@@ -29,13 +29,20 @@ const { user } = useAuth()
         </form>
 
         <div class="d-flex align-items-center gap-2 ms-md-3">
-          <!-- Enabled in M4, once topics exist. -->
-          <BButton :variant="null" class="btn-accent" size="sm" disabled>New topic</BButton>
+          <!-- Enabled in M4, once topics exist; unverified users will stay blocked (FR-1.9). -->
+          <span
+            :title="
+              user && !user.emailVerified ? 'Verify your email address to start a topic' : undefined
+            "
+          >
+            <BButton :variant="null" class="btn-accent text-nowrap" size="sm" disabled>
+              New topic
+            </BButton>
+          </span>
           <UserMenu v-if="user" />
           <template v-else>
             <NuxtLink to="/login" class="btn btn-outline-primary btn-sm">Log in</NuxtLink>
-            <!-- Enabled when the Register page lands. -->
-            <BButton variant="primary" size="sm" disabled>Sign up</BButton>
+            <NuxtLink to="/register" class="btn btn-primary btn-sm">Sign up</NuxtLink>
           </template>
           <ThemeToggle />
         </div>

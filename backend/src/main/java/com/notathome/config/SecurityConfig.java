@@ -78,6 +78,8 @@ class SecurityConfig {
                         "/api/info",
                         "/api/csrf",
                         "/api/auth/login",
+                        "/api/auth/register",
+                        "/api/auth/verify-email",
                         "/api/auth/logout",
                         "/api/v3/api-docs/**",
                         "/api/swagger-ui.html",

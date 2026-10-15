@@ -68,15 +68,18 @@ Login uses server-side sessions kept in PostgreSQL (Spring Session). The browser
 
 In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): it forwards the session cookie during SSR and adds the CSRF header by itself. `useAuth()` exposes the current user (loaded on every server-side render), `login()` and `logout()`. Backend tests should send the token with `com.notathome.support.Csrf.token(mockMvc)`, not `csrf()` from spring-security-test.
 
-Until registration exists, create a dev user by hand. PostgreSQL can hash the password itself (`docker compose exec postgres psql -U notathome -d notathome`):
+### Accounts in dev
+
+Sign up at <http://localhost:3000/register>. The verification email goes to Mailpit (<http://localhost:8025>); open it there and click the link. People can log in before verifying but can't post (FR-1.9), and the page shows a banner with a "Resend email" button until they do.
+
+To make an account an admin, or to skip the email, edit it directly (`docker compose exec postgres psql -U notathome -d notathome`):
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- once per database
-INSERT INTO users (username, email, display_name, password_hash)
-VALUES ('alice', 'alice@example.com', 'Alice', '{bcrypt}' || crypt('a password', gen_salt('bf', 10)));
+UPDATE users SET role = 'ADMIN' WHERE username = 'alice';
+UPDATE users SET email_verified_at = now() WHERE username = 'alice';
 ```
 
-The `{bcrypt}` prefix is required: Spring's password encoder reads it to pick the algorithm. Add `role` (`'ADMIN'`) or `email_verified_at` (`now()`) to the insert if you need them.
+For backend code, mark endpoints that need a verified email with `@RequiresVerifiedEmail` (checked against the database on every call, so verifying takes effect in sessions that are already open). Verification links expire after 24 hours and work once; only their hashes are stored.
 
 ## Continuous integration
 

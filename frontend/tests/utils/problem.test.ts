@@ -25,10 +25,21 @@ describe('parseProblem', () => {
     })
   })
 
+  it('reads the machine-readable code that some 403s carry', () => {
+    const verify = {
+      status: 403,
+      data: { detail: 'Verify your email address to do this.', code: 'EMAIL_NOT_VERIFIED' },
+    }
+    expect(parseProblem(verify).code).toBe('EMAIL_NOT_VERIFIED')
+    expect(parseProblem({ status: 403, data: {} }).code).toBeUndefined()
+    expect(parseProblem({ status: 403, data: { code: 42 } }).code).toBeUndefined()
+  })
+
   it('copes with errors that have no response (network failures) or odd shapes', () => {
     expect(parseProblem(new Error('fetch failed'))).toEqual({
       status: undefined,
       detail: undefined,
+      code: undefined,
       fieldErrors: {},
     })
     expect(parseProblem(undefined).status).toBeUndefined()
