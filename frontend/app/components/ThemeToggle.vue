@@ -13,8 +13,12 @@ const options = [
     <template #button-content>
       <span class="visually-hidden">Theme: {{ colorMode.preference }}</span>
       <ClientOnly>
-        <span aria-hidden="true">{{ colorMode.value === 'dark' ? '☾' : '☀' }}</span>
-        <template #fallback><span aria-hidden="true">☀</span></template>
+        <i
+          class="bi"
+          :class="colorMode.value === 'dark' ? 'bi-moon-stars-fill' : 'bi-sun-fill'"
+          aria-hidden="true"
+        />
+        <template #fallback><i class="bi bi-sun-fill" aria-hidden="true" /></template>
       </ClientOnly>
     </template>
     <BDropdownItem

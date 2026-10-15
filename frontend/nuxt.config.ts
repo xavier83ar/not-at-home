@@ -5,7 +5,7 @@ export default defineNuxtConfig({
 
   modules: ['@nuxt/eslint', '@nuxt/fonts', '@nuxtjs/color-mode', '@bootstrap-vue-next/nuxt'],
 
-  css: ['~/assets/scss/main.scss'],
+  css: ['bootstrap-icons/font/bootstrap-icons.min.css', '~/assets/scss/main.scss'],
 
   // Follow the system setting by default; the toggle in the top bar overrides it.
   colorMode: { preference: 'system', fallback: 'light', classSuffix: '' },
