@@ -1,1 +1,22 @@
+# IDEs
 .idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+
+# Build output
+target/
+dist/
+.output/
+.nuxt/
+node_modules/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Local uploads (dev)
+uploads/

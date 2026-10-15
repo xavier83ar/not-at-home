@@ -83,7 +83,7 @@ compose.yaml  local dependencies: PostgreSQL, Mailpit
 
 ### 4.3 Frontend (Nuxt)
 - Nuxt with file-based routing. All public pages (home, categories, topics, profiles, search) are server-rendered.
-- SEO: page titles and meta tags with `useSeoMeta`, readable URLs with slugs (e.g. `/t/123-best-trails-in-patagonia`), canonical URLs, and a generated sitemap.
+- SEO: page titles and meta tags with `useSeoMeta`, readable URLs with slugs (e.g. `/topics/123-best-trails-in-patagonia`), canonical URLs, and a generated sitemap.
 - Bootstrap's SCSS, themed with the brand tokens from the brand guide (section 2.2) for light and dark mode. Interactive components (dropdowns, modals) come from BootstrapVueNext or plain Vue, not Bootstrap's own JS.
 - Editor.js runs only in the browser, as a client-only component. Saved posts are rendered from their Editor.js JSON to sanitized HTML during SSR, so search engines see the content.
 - Talks to the API only through `/api`. During SSR it forwards the visitor's session cookie to the backend.

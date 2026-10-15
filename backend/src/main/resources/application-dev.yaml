@@ -1,0 +1,9 @@
+spring:
+  docker:
+    compose:
+      enabled: true
+      file: ../compose.yaml
+      lifecycle-management: start-only
+  mail:
+    host: localhost
+    port: 1025

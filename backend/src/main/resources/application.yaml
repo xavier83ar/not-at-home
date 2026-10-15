@@ -1,0 +1,38 @@
+spring:
+  profiles:
+    # Plain `./mvnw spring-boot:run` is the dev setup; production sets SPRING_PROFILES_ACTIVE=prod.
+    default: dev
+  application:
+    name: not-at-home
+  jpa:
+    open-in-view: false
+  session:
+    jdbc:
+      # Tables are created by Flyway (see db/migration).
+      initialize-schema: never
+
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+
+management:
+  endpoints:
+    web:
+      base-path: /api
+      exposure:
+        include: health
+      path-mapping:
+        health: health
+  health:
+    # An unreachable SMTP server must not make the app report itself as down.
+    mail:
+      enabled: false
+
+springdoc:
+  api-docs:
+    path: /api/v3/api-docs
+  swagger-ui:
+    path: /api/swagger-ui.html

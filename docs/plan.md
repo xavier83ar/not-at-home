@@ -32,7 +32,7 @@ Requirement IDs (FR-x, NFR-x, section numbers) refer to [`requirements.md`](requ
 | API errors | Spring's standard `ProblemDetail` (RFC 9457) JSON, with field errors for validation failures. |
 | Pagination | `?page=` (1-based in the UI) and a fixed page size of 10 (FR-7.1). Responses include items, page, total pages and total items. |
 | Dates | Stored and sent as UTC ISO-8601; formatted in the browser (NFR-7). |
-| IDs and URLs | Numeric IDs plus slugs in URLs, e.g. `/c/hiking`, `/t/123-best-trails-in-patagonia`. The ID is what's looked up; a wrong slug redirects to the right one. |
+| IDs and URLs | Numeric IDs plus slugs in URLs, e.g. `/categories/hiking`, `/topics/123-best-trails-in-patagonia`. The ID is what's looked up; a wrong slug redirects to the right one. |
 | Editor.js content | Stored as JSON. The backend validates it against an allow-list of block types (FR-4.4), sanitizes inline HTML, and extracts plain text into `search_text` on save. |
 | Backend packages | By feature (`auth`, `users`, `categories`, `topics`, `posts`, `search`, `moderation`, `uploads`), not by layer. |
 | Package manager | npm for the frontend; Maven wrapper for the backend. |
