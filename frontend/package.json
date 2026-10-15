@@ -26,7 +26,7 @@
   "devDependencies": {
     "@nuxt/eslint": "^1.17.0",
     "@nuxt/fonts": "^1.0.1",
-    "@nuxt/test-utils": "^4.3.3",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",
     "eslint": "^10.12.0",
     "eslint-config-prettier": "^10.1.8",

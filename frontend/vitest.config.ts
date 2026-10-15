@@ -1,12 +1,13 @@
 import { fileURLToPath } from 'node:url'
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import vue from '@vitejs/plugin-vue'
+import { defineConfig } from 'vitest/config'
 
-export default defineVitestConfig({
+// Plain Vitest (no Nuxt environment): components under test import what they use explicitly.
+export default defineConfig({
+  plugins: [vue()],
+  resolve: { alias: { '~': fileURLToPath(new URL('./app', import.meta.url)) } },
   test: {
-    environment: 'nuxt',
-    environmentOptions: {
-      nuxt: { rootDir: fileURLToPath(new URL('.', import.meta.url)) },
-    },
+    environment: 'happy-dom',
     include: ['tests/**/*.test.ts'],
   },
 })
