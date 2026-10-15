@@ -27,7 +27,7 @@ useSeoMeta({ title: 'Home' })
     <p v-if="info" class="lead mb-0" data-testid="backend-info">
       Connected to <strong>{{ info.name }}</strong> {{ info.version }}
     </p>
-    <BAlert v-else-if="error" :model-value="true" variant="warning" class="d-inline-block">
+    <BAlert v-else-if="error" :model-value="true" variant="warning">
       The backend is not reachable.
     </BAlert>
   </section>
