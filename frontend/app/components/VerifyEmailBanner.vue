@@ -24,16 +24,15 @@ async function onResend() {
   <div v-if="visible" class="bg-warning-subtle border-bottom" data-testid="verify-banner">
     <div class="container py-2 d-flex flex-wrap align-items-center gap-2 justify-content-center">
       <span v-if="status === 'sent'" role="status">
-        Email sent to <strong>{{ user?.email }}</strong
-        >. Check your inbox (and spam folder).
+        Email sent to <strong>{{ user?.email }}</strong>.
+        Check your inbox (and spam folder).
       </span>
       <span v-else-if="status === 'error'" role="alert">
         Could not send the email. Please try again in a moment.
       </span>
       <span v-else>
         Verify your email address to start posting. We sent a link to
-        <strong>{{ user?.email }}</strong
-        >.
+        <strong>{{ user?.email }}</strong>.
       </span>
       <BButton
         v-if="status !== 'sent'"
