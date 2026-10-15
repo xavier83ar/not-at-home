@@ -103,6 +103,8 @@ class SecurityConfig {
                         "/api/auth/login",
                         "/api/auth/register",
                         "/api/auth/verify-email",
+                        "/api/auth/forgot-password",
+                        "/api/auth/reset-password",
                         "/api/auth/logout",
                         "/api/v3/api-docs/**",
                         "/api/swagger-ui.html",

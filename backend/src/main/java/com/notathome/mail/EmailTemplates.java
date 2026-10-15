@@ -44,6 +44,36 @@ public final class EmailTemplates {
     return new EmailMessage(subject, text, html);
   }
 
+  public static EmailMessage resetPassword(String displayName, String resetUrl) {
+    String subject = "Reset your password";
+    String text =
+        """
+        Hi %s,
+
+        Someone asked to reset the password of your Not at Home account. To choose a new one, open:
+
+        %s
+
+        The link works for 1 hour and only once. If you didn't ask for this, ignore this email: \
+        your password stays the same.
+        """
+            .formatted(displayName, resetUrl);
+    String html =
+        layout(
+            subject,
+            paragraph("Hi " + escape(displayName) + ",")
+                + paragraph(
+                    "Someone asked to reset the password of your Not at Home account. To choose a"
+                        + " new one, use the button below.")
+                + button("Choose a new password", resetUrl)
+                + small(
+                    "The link works for 1 hour and only once. If you didn't ask for this, ignore"
+                        + " this email: your password stays the same.")
+                + small(
+                    "Button not working? Paste this link into your browser:<br>" + link(resetUrl)));
+    return new EmailMessage(subject, text, html);
+  }
+
   private static String layout(String title, String content) {
     return """
         <!DOCTYPE html>

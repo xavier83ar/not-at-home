@@ -44,6 +44,21 @@ export function useAuth() {
     if (user.value) await fetchUser()
   }
 
+  /**
+   * Asks for a reset email. Resolves the same way whether or not the address has an account, so
+   * pages must not say which. Throws on a malformed address (400) or a server problem.
+   */
+  async function requestPasswordReset(email: string) {
+    await $api('/api/auth/forgot-password', { method: 'POST', body: { email } })
+  }
+
+  /** Sets a new password with the token from the email. Throws the `$api` error on failure. */
+  async function resetPassword(token: string, password: string) {
+    await $api('/api/auth/reset-password', { method: 'POST', body: { token, password } })
+    // The backend ended every session of this user, this browser's included.
+    user.value = null
+  }
+
   async function resendVerification() {
     await $api('/api/auth/resend-verification', { method: 'POST' })
   }
@@ -63,6 +78,8 @@ export function useAuth() {
     login,
     register,
     verifyEmail,
+    requestPasswordReset,
+    resetPassword,
     resendVerification,
     logout,
   }

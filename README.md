@@ -75,6 +75,8 @@ In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): i
 
 Sign up at <http://localhost:3000/register>. The verification email goes to Mailpit (<http://localhost:8025>); open it there and click the link. People can log in before verifying but can't post (FR-1.9), and the page shows a banner with a "Resend email" button until they do.
 
+Forgot your password? Use <http://localhost:3000/forgot-password>; the email arrives in Mailpit too. The request always answers the same way whether or not the address has an account, so it can't be used to find out who is registered (the lookup, the token and the email all happen on another thread, so the response time doesn't give it away either). Reset links last 1 hour and work once, and a reset logs the user out everywhere: every session and every remembered login, including the browser that finishes the reset. For code that needs the same (password change, ban, demotion), use `UserSessions.endAll(username)`.
+
 To make an account an admin, or to skip the email, edit it directly (`docker compose exec postgres psql -U notathome -d notathome`):
 
 ```sql

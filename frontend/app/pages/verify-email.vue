@@ -1,5 +1,7 @@
 <script setup lang="ts">
 useSeoMeta({ title: 'Verify your email', robots: 'noindex' })
+// The token is in the URL: don't pass it on to anything the page links to or loads.
+useHead({ meta: [{ name: 'referrer', content: 'no-referrer' }] })
 
 const route = useRoute()
 const { user, isLoggedIn, verifyEmail, resendVerification } = useAuth()
