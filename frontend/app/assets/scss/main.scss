@@ -1,0 +1,91 @@
+// Brand theme. Tokens come from design/brand/README.md (section 5).
+@import 'bootstrap/scss/functions';
+
+// Brand
+$pine: #1f4d3a;
+$pine-light: #7fb89a;
+$ember: #e06a2c;
+$ember-text: #c2531d;
+$ink: #111111;
+
+// Bootstrap theme colors
+$primary: $pine;
+$warning: $ember;
+$dark: $ink;
+$body-color: $ink;
+$link-color: $pine;
+
+// Fonts
+$font-family-sans-serif:
+  'Barlow',
+  system-ui,
+  -apple-system,
+  'Segoe UI',
+  Roboto,
+  sans-serif;
+$headings-font-family: 'Montserrat', 'Barlow', system-ui, sans-serif;
+$headings-font-weight: 700;
+$font-family-monospace: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+
+// Extra "accent" theme color (Ember) for calls to action. Bootstrap picks black text for it,
+// which is the brand rule (white on Ember fails contrast).
+$theme-colors: map-merge(
+  $theme-colors,
+  (
+    'accent': $ember,
+  )
+);
+
+@import 'bootstrap/scss/bootstrap';
+
+// Dark mode overrides
+[data-bs-theme='dark'] {
+  --bs-body-bg: #121212;
+  --bs-body-color: #ffffff;
+  --bs-primary: #{$pine-light};
+  --bs-primary-rgb: 127, 184, 154;
+  --bs-link-color: #{$pine-light};
+  --bs-link-color-rgb: 127, 184, 154;
+  --bs-link-hover-color: #a3cdb6;
+
+  // Primary buttons use Pine light with black text.
+  .btn-primary {
+    --bs-btn-color: #{$ink};
+    --bs-btn-bg: #{$pine-light};
+    --bs-btn-border-color: #{$pine-light};
+    --bs-btn-hover-color: #{$ink};
+    --bs-btn-hover-bg: #a3cdb6;
+    --bs-btn-hover-border-color: #a3cdb6;
+    --bs-btn-active-color: #{$ink};
+    --bs-btn-active-bg: #a3cdb6;
+    --bs-btn-active-border-color: #a3cdb6;
+    --bs-btn-disabled-color: #{$ink};
+    --bs-btn-disabled-bg: #{$pine-light};
+    --bs-btn-disabled-border-color: #{$pine-light};
+  }
+}
+
+// Logo swaps with the color mode.
+.logo-dark {
+  display: none;
+}
+
+[data-bs-theme='dark'] {
+  .logo-light {
+    display: none;
+  }
+
+  .logo-dark {
+    display: inline-block;
+  }
+}
+
+// Footer sticks to the bottom on short pages.
+#__nuxt {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
