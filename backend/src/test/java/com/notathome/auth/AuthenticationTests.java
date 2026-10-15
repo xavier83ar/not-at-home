@@ -175,12 +175,36 @@ class AuthenticationTests {
   }
 
   @Test
-  void bannedUserCannotLogIn() throws Exception {
+  void bannedUserWithTheRightPasswordGetsAClearError() throws Exception {
     User user = createUser("alice", "alice@example.com");
     user.setStatus(UserStatus.BANNED);
     users.save(user);
 
-    assertThat(login("alice", PASSWORD).getResponse().getStatus()).isEqualTo(401);
+    MvcResult result = login("alice", PASSWORD);
+
+    assertThat(result.getResponse().getStatus()).isEqualTo(403);
+    assertThat(result.getResponse().getContentType()).contains("application/problem+json");
+    assertThat(result.getResponse().getContentAsString())
+        .contains("\"detail\":\"This account has been banned.\"", "\"code\":\"ACCOUNT_BANNED\"");
+    assertThat(sessionOf(result)).isNull();
+    assertThat(jdbc.queryForObject("select count(*) from spring_session", Integer.class)).isZero();
+  }
+
+  @Test
+  void bannedUserWithAWrongPasswordLooksLikeAnyOtherFailedLogin() throws Exception {
+    User user = createUser("alice", "alice@example.com");
+    user.setStatus(UserStatus.BANNED);
+    users.save(user);
+    createUser("bob", "bob@example.com");
+
+    MvcResult bannedWrongPassword = login("alice", "nope-nope-nope");
+    MvcResult activeWrongPassword = login("bob", "nope-nope-nope");
+
+    // Nobody can find out an account is banned without knowing its password.
+    assertThat(bannedWrongPassword.getResponse().getStatus()).isEqualTo(401);
+    assertThat(bannedWrongPassword.getResponse().getContentAsString())
+        .isEqualTo(activeWrongPassword.getResponse().getContentAsString().replace("bob", "alice"));
+    assertThat(bannedWrongPassword.getResponse().getContentAsString()).doesNotContain("banned");
   }
 
   @Test

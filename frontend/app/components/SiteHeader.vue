@@ -41,8 +41,10 @@ const { user } = useAuth()
           </span>
           <UserMenu v-if="user" />
           <template v-else>
-            <NuxtLink to="/login" class="btn btn-outline-primary btn-sm">Log in</NuxtLink>
-            <NuxtLink to="/register" class="btn btn-primary btn-sm">Sign up</NuxtLink>
+            <NuxtLink to="/login" class="btn btn-outline-primary btn-sm text-nowrap"
+              >Log in</NuxtLink
+            >
+            <NuxtLink to="/register" class="btn btn-primary btn-sm text-nowrap">Sign up</NuxtLink>
           </template>
           <ThemeToggle />
         </div>

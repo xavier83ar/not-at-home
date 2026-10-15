@@ -25,10 +25,10 @@ export function useAuth() {
   }
 
   /** Throws the `$api` error on failure; read it with `parseProblem`. */
-  async function login(login: string, password: string) {
+  async function login(login: string, password: string, rememberMe = false) {
     user.value = await $api<CurrentUser>('/api/auth/login', {
       method: 'POST',
-      body: { login, password },
+      body: { login, password, rememberMe },
     })
   }
 

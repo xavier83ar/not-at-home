@@ -16,7 +16,7 @@ if (isLoggedIn.value) {
 const hydrated = ref(false)
 onMounted(() => (hydrated.value = true))
 
-const form = reactive({ login: '', password: '' })
+const form = reactive({ login: '', password: '', rememberMe: false })
 const submitting = ref(false)
 const message = ref<string>()
 const fieldErrors = ref<Record<string, string[]>>({})
@@ -26,7 +26,7 @@ async function onSubmit() {
   message.value = undefined
   fieldErrors.value = {}
   try {
-    await login(form.login, form.password)
+    await login(form.login, form.password, form.rememberMe)
     await navigateTo(destination.value)
   } catch (error) {
     const problem = parseProblem(error)
@@ -63,6 +63,10 @@ async function onSubmit() {
         autocomplete="current-password"
         :errors="fieldErrors.password"
       />
+
+      <BFormCheckbox v-model="form.rememberMe" name="rememberMe" class="mb-3">
+        Keep me logged in on this device for 30 days
+      </BFormCheckbox>
 
       <BButton
         type="submit"

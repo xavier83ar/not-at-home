@@ -1,9 +1,11 @@
 package com.notathome.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +16,7 @@ import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.rememberme.AbstractRememberMeServices;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
@@ -31,9 +34,18 @@ class SecurityConfig {
    * header. The cookie is not {@code HttpOnly} on purpose, so JavaScript can read it.
    */
   @Bean
-  CsrfTokenRepository csrfTokenRepository() {
+  CsrfTokenRepository csrfTokenRepository(
+      @Value("${server.servlet.session.cookie.secure:false}") boolean secureCookies) {
     CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-    repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
+    repository.setCookieCustomizer(
+        cookie -> {
+          cookie.sameSite("Lax");
+          if (secureCookies) {
+            // Not left to request.isSecure(): server-side renders reach the backend over plain
+            // HTTP, so the cookie would otherwise come back without the Secure flag.
+            cookie.secure(true);
+          }
+        });
     return repository;
   }
 
@@ -56,6 +68,16 @@ class SecurityConfig {
       UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
     DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
     provider.setPasswordEncoder(passwordEncoder);
+    // Spring checks the account status before the password. For a banned account that would
+    // answer "banned" to anyone who types its username, whatever password they try. Check it
+    // after the password instead, so only the real owner learns the account is banned (FR-1.10).
+    provider.setPreAuthenticationChecks(user -> {});
+    provider.setPostAuthenticationChecks(
+        user -> {
+          if (!user.isAccountNonLocked()) {
+            throw new LockedException("Account is banned");
+          }
+        });
     return new ProviderManager(provider);
   }
 
@@ -63,7 +85,8 @@ class SecurityConfig {
   SecurityFilterChain securityFilterChain(
       HttpSecurity http,
       CsrfTokenRepository csrfTokenRepository,
-      CsrfTokenRequestHandler csrfTokenRequestHandler) {
+      CsrfTokenRequestHandler csrfTokenRequestHandler,
+      AbstractRememberMeServices rememberMeServices) {
     http.csrf(
             csrf ->
                 csrf.csrfTokenRepository(csrfTokenRepository)
@@ -90,6 +113,11 @@ class SecurityConfig {
         .formLogin(AbstractHttpConfigurer::disable)
         .httpBasic(AbstractHttpConfigurer::disable)
         .logout(AbstractHttpConfigurer::disable)
+        // Brings the session back from the remember-me cookie. The cookie is only honoured for
+        // active accounts: a banned user's cookie is rejected and cleared.
+        .rememberMe(
+            remember ->
+                remember.rememberMeServices(rememberMeServices).key(rememberMeServices.getKey()))
         // Nothing to redirect back to in an API. The default cache would save every rejected
         // request in a new session, so each guest page view (which calls /api/me) would add a row.
         .requestCache(RequestCacheConfigurer::disable)

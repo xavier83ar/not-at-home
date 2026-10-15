@@ -160,6 +160,7 @@ export interface components {
         LoginRequest: {
             login: string;
             password: string;
+            rememberMe?: boolean;
         };
         AppInfo: {
             name?: string;
