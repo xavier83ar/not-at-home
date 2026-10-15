@@ -67,7 +67,7 @@ Two services in one repository:
 - **Frontend:** a Nuxt app (Vue 3 + TypeScript) that renders pages on the server (SSR). A public forum needs good SEO, so every public page must arrive as complete HTML.
 - **Backend:** a Spring Boot REST API backed by PostgreSQL.
 
-The browser only talks to the frontend's domain. Requests to `/api/**` are proxied to the backend, so the website and the API share one origin: no CORS setup, and login cookies just work. In dev and by default in production, Nuxt does the proxying (`routeRules`). A reverse proxy in front of both services can take over once hosting is chosen.
+The browser only talks to the frontend's domain. Requests to `/api/**` are proxied to the backend, so the website and the API share one origin: no CORS setup, and login cookies just work. In dev and by default in production, Nuxt does the proxying (a server handler, so the backend URL is read at runtime). A reverse proxy in front of both services can take over once hosting is chosen.
 
 ### 4.2 Repository layout
 No monorepo tooling (Nx or similar); plain folders are enough at this size.

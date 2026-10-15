@@ -12,8 +12,20 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
-      { name: 'Barlow', provider: 'google', weights: [400, 500, 600] },
-      { name: 'Montserrat', provider: 'google', weights: [700, 800] },
+      {
+        name: 'Barlow',
+        provider: 'google',
+        global: true,
+        weights: [400, 500, 600],
+        styles: ['normal'],
+      },
+      {
+        name: 'Montserrat',
+        provider: 'google',
+        global: true,
+        weights: [700, 800],
+        styles: ['normal'],
+      },
     ],
   },
 

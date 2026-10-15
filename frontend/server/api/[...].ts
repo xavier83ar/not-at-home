@@ -10,11 +10,8 @@ export default defineEventHandler((event) => {
   const host = getRequestHost(event, { xForwardedHost: true })
   const proto = getRequestProtocol(event, { xForwardedProto: true })
 
-  return proxyRequest(
-    event,
-    `${backendUrl}/api${event.context.params?._ ? '/' + event.context.params._ : ''}`,
-    {
-      headers: { 'x-forwarded-host': host, 'x-forwarded-proto': proto },
-    },
-  )
+  // `event.path` keeps the `/api` prefix and the query string.
+  return proxyRequest(event, `${backendUrl}${event.path}`, {
+    headers: { 'x-forwarded-host': host, 'x-forwarded-proto': proto },
+  })
 })

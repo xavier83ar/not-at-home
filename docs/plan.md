@@ -84,7 +84,7 @@ Goal: both services run in dev, talk to each other through `/api`, and CI builds
 - [ ] Bootstrap SCSS themed with the brand tokens from `design/brand/README.md` (Pine, Ember, fonts) for light and dark mode. BootstrapVueNext for interactive components.
 - [ ] Load the Montserrat and Barlow fonts (self-hosted or through Nuxt's font module) and add the favicon and app icons from `design/brand/logo/`.
 - [ ] Default layout: top bar from section 8.1 (logo, nav links, search box placeholder, user menu placeholder), footer, theme toggle that follows the system setting by default.
-- [ ] `/api/**` proxied to the backend through `routeRules`, with the backend URL from an environment variable.
+- [ ] `/api/**` proxied to the backend through a Nitro server handler (not `routeRules`, which fixes the target at build time), with the backend URL read at runtime from `NUXT_BACKEND_URL`.
 - [ ] A small API client wrapper that, during SSR, forwards the incoming `Cookie` header to the backend and passes any `Set-Cookie` back to the browser.
 - [ ] Script to generate TypeScript types from the backend's OpenAPI spec (e.g. openapi-typescript).
 - [ ] Vitest set up with one sample test.

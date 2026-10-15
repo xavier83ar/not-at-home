@@ -5,8 +5,12 @@
       <BNavbarToggle target="main-nav" />
       <BCollapse id="main-nav" is-nav>
         <BNavbarNav class="me-md-3">
-          <BNavItem to="/">Home</BNavItem>
-          <BNavItem to="/categories">Categories</BNavItem>
+          <li class="nav-item">
+            <NuxtLink to="/" class="nav-link" active-class="active">Home</NuxtLink>
+          </li>
+          <li class="nav-item">
+            <NuxtLink to="/categories" class="nav-link" active-class="active">Categories</NuxtLink>
+          </li>
         </BNavbarNav>
 
         <!-- Search box placeholder; wired up in M5/M6. -->
