@@ -16,6 +16,13 @@
   },
   "dependencies": {
     "@bootstrap-vue-next/nuxt": "^1.0.0",
+    "@editorjs/code": "^2.9.4",
+    "@editorjs/delimiter": "^1.4.2",
+    "@editorjs/editorjs": "^2.31.7",
+    "@editorjs/header": "^2.8.9",
+    "@editorjs/image": "^2.10.3",
+    "@editorjs/list": "^2.0.9",
+    "@editorjs/quote": "^2.7.6",
     "@nuxtjs/color-mode": "^4.0.1",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.2",

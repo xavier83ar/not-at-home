@@ -21,8 +21,8 @@ const blocks = computed(() => (props.document?.blocks ?? []) as { type: string; 
 
 function headerTag(data: Data): string {
   const level = Number(data.level)
-  // Posts sit under the page's own h1 and the topic's h2, so their headings start at h3.
-  return `h${Number.isInteger(level) ? Math.min(Math.max(level, 1) + 2, 6) : 4}`
+  // Posts sit under the page's own h1, so their headings start at h2 (level 1 + 1).
+  return `h${Number.isInteger(level) ? Math.min(Math.max(level, 1) + 1, 6) : 3}`
 }
 
 function isSafeImage(data: Data): boolean {
