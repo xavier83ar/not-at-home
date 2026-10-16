@@ -60,6 +60,7 @@ async function submit() {
 
 <template>
   <section class="mx-auto new-topic">
+    <BreadcrumbNav :crumbs="[{ label: 'New topic' }]" />
     <h1 class="h3 mb-4">New topic</h1>
 
     <BAlert v-if="loadError" :model-value="true" variant="warning">

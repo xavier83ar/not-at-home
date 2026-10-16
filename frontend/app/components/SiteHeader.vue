@@ -1,5 +1,11 @@
 <script setup lang="ts">
 const { user } = useAuth()
+const route = useRoute()
+
+// By path: the router only lights a link up for its own route, not for `/categories/hiking`.
+const inCategories = computed(
+  () => route.path === '/categories' || route.path.startsWith('/categories/'),
+)
 </script>
 <template>
   <header class="border-bottom bg-body">
@@ -9,14 +15,23 @@ const { user } = useAuth()
       <BCollapse id="main-nav" is-nav>
         <BNavbarNav class="me-md-3">
           <li class="nav-item">
-            <NuxtLink to="/" class="nav-link" active-class="active">Home</NuxtLink>
+            <!-- Exact match: every path starts with "/", so a plain active class would light up everywhere. -->
+            <NuxtLink to="/" class="nav-link" active-class="" exact-active-class="active"
+              >Home</NuxtLink
+            >
           </li>
           <li class="nav-item">
-            <NuxtLink to="/categories" class="nav-link" active-class="active">Categories</NuxtLink>
+            <NuxtLink
+              to="/categories"
+              class="nav-link"
+              :class="{ active: inCategories }"
+              :aria-current="inCategories ? 'true' : undefined"
+              >Categories</NuxtLink
+            >
           </li>
         </BNavbarNav>
 
-        <!-- Search box placeholder; wired up in M5/M6. -->
+        <!-- Search box placeholder; M6 makes it work. -->
         <form class="flex-grow-1 mx-md-auto my-2 my-md-0 search-box" role="search" @submit.prevent>
           <label for="site-search" class="visually-hidden">Search the forum</label>
           <BFormInput
@@ -34,9 +49,18 @@ const { user } = useAuth()
             v-if="user && !user.emailVerified"
             title="Verify your email address to start a topic"
           >
-            <BButton :variant="null" class="btn-accent text-nowrap" size="sm" disabled>
+            <BButton
+              :variant="null"
+              class="btn-accent text-nowrap"
+              size="sm"
+              disabled
+              aria-describedby="new-topic-hint"
+            >
               New topic
             </BButton>
+            <span id="new-topic-hint" class="visually-hidden">
+              Verify your email address to start a topic
+            </span>
           </span>
           <NuxtLink v-else to="/topics/new" class="btn btn-accent btn-sm text-nowrap">
             New topic

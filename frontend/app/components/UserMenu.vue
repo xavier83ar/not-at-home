@@ -16,7 +16,13 @@ async function onLogout() {
     data-testid="user-menu"
   >
     <template #button-content>
-      <i class="bi bi-person-circle me-1" aria-hidden="true" />
+      <UserAvatar
+        :name="user.displayName"
+        :src="user.avatarUrl"
+        :size="22"
+        aria-hidden="true"
+        class="me-1 align-text-bottom"
+      />
       <span class="user-name">{{ user.displayName }}</span>
     </template>
     <BDropdownText class="small text-body-secondary"
