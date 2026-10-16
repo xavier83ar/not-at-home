@@ -29,16 +29,18 @@ const { user } = useAuth()
         </form>
 
         <div class="d-flex align-items-center gap-2 ms-md-3">
-          <!-- Enabled in M4, once topics exist; unverified users will stay blocked (FR-1.9). -->
+          <!-- Guests are sent to log in and brought back; unverified users can't post (FR-1.9). -->
           <span
-            :title="
-              user && !user.emailVerified ? 'Verify your email address to start a topic' : undefined
-            "
+            v-if="user && !user.emailVerified"
+            title="Verify your email address to start a topic"
           >
             <BButton :variant="null" class="btn-accent text-nowrap" size="sm" disabled>
               New topic
             </BButton>
           </span>
+          <NuxtLink v-else to="/topics/new" class="btn btn-accent btn-sm text-nowrap">
+            New topic
+          </NuxtLink>
           <UserMenu v-if="user" />
           <template v-else>
             <NuxtLink to="/login" class="btn btn-outline-primary btn-sm text-nowrap"

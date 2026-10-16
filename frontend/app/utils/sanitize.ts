@@ -31,7 +31,34 @@ export function sanitizeInline(html: string): string {
   })
 }
 
-/** Plain text of inline HTML, e.g. for an image's alt text. */
+const NAMED_ENTITIES: Record<string, string> = {
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  amp: '&',
+}
+
+function decodeEntities(text: string): string {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity: string) => {
+    if (entity.startsWith('#')) {
+      const code =
+        entity[1]?.toLowerCase() === 'x' ? parseInt(entity.slice(2), 16) : Number(entity.slice(1))
+      return Number.isInteger(code) && code > 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : match
+    }
+    return NAMED_ENTITIES[entity.toLowerCase()] ?? match
+  })
+}
+
+/**
+ * Plain text of inline HTML (tags removed, entities decoded), e.g. for an image's alt text or the
+ * text of a quote. The backend writes some characters as numeric entities (`+` as `&#43;`...).
+ */
 export function inlineText(html: string): string {
-  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }).replace(/\s+/g, ' ').trim()
+  return decodeEntities(sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }))
+    .replace(/\s+/g, ' ')
+    .trim()
 }

@@ -54,4 +54,14 @@ describe('inlineText', () => {
   it('removes tags and collapses spaces', () => {
     expect(inlineText('A <b>very</b>   nice\nview')).toBe('A very nice view')
   })
+
+  it('decodes entities, including the numeric ones the backend writes', () => {
+    expect(inlineText('1 &lt; 2 &amp;&nbsp;a&#43;b&#61;c &#x41; &unknown;')).toBe(
+      '1 < 2 & a+b=c A &unknown;',
+    )
+  })
+
+  it('decodes an escaped ampersand only once', () => {
+    expect(inlineText('&amp;lt;')).toBe('&lt;')
+  })
 })

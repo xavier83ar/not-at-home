@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import type { components } from '~/types/api'
+import ReplyForm from '~/components/ReplyForm.vue'
 
 type TopicPage = components['schemas']['TopicPageResponse']
+type PostResponse = components['schemas']['PostResponse']
+type PostLocation = components['schemas']['PostLocation']
+type DeletePostResponse = components['schemas']['DeletePostResponse']
 
 const route = useRoute()
 const { $api } = useNuxtApp()
@@ -11,7 +15,7 @@ const param = parseTopicParam(route.params.topic)
 if (!param) throw createError({ statusCode: 404, statusMessage: 'Topic not found', fatal: true })
 
 const page = computed(() => parsePage(route.query.page))
-const { data, error } = await useAsyncData(
+const { data, error, refresh } = await useAsyncData(
   () => `topic-${param.id}-${page.value}`,
   () => $api<TopicPage>(`/api/topics/${param.id}`, { query: { page: page.value } }),
   { watch: [page] },
@@ -45,6 +49,39 @@ useSeoMeta({
 })
 
 const locked = computed(() => topic.value?.locked === true)
+const canReply = computed(
+  () => !!user.value && user.value.emailVerified && !locked.value && !data.value?.removed,
+)
+
+const replyForm = ref<InstanceType<typeof ReplyForm>>()
+
+function scrollToPost(id: number) {
+  document.getElementById(`post-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+/** After a reply: show it, on whichever page it landed (FR-4.6). */
+async function onPosted(post: PostResponse) {
+  const location = await $api<PostLocation>(`/api/posts/${post.id}/location`)
+  if (location.page === page.value) {
+    await refresh()
+    await nextTick()
+    scrollToPost(post.id)
+  } else {
+    await navigateTo({
+      path: route.path,
+      query: location.page > 1 ? { page: location.page } : {},
+      hash: `#post-${post.id}`,
+    })
+  }
+}
+
+async function onDeleted(result: DeletePostResponse) {
+  if (result.topicRemoved && data.value) {
+    await navigateTo(`/categories/${data.value.category.slug}`)
+  } else {
+    await refresh()
+  }
+}
 </script>
 
 <template>
@@ -90,7 +127,15 @@ const locked = computed(() => topic.value?.locked === true)
         </p>
       </header>
 
-      <PostCard v-for="post in data.posts.items" :key="post.id" :post="post" />
+      <PostCard
+        v-for="post in data.posts.items"
+        :key="post.id"
+        :post="post"
+        :can-reply="canReply"
+        @quote="replyForm?.quote($event)"
+        @changed="refresh()"
+        @deleted="onDeleted"
+      />
 
       <PaginationNav :page="data.posts.page" :total-pages="data.posts.totalPages" class="mb-4" />
 
@@ -102,6 +147,12 @@ const locked = computed(() => topic.value?.locked === true)
         <NuxtLink :to="`/login?redirect=${encodeURIComponent(route.fullPath)}`">Log in</NuxtLink>
         or <NuxtLink to="/register">sign up</NuxtLink> to reply.
       </p>
+      <ReplyForm
+        v-else-if="!data.removed"
+        ref="replyForm"
+        :topic-id="topic.id"
+        @posted="onPosted"
+      />
     </template>
   </section>
 </template>

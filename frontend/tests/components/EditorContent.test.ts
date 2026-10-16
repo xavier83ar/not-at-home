@@ -28,13 +28,13 @@ describe('EditorContent', () => {
     expect(wrapper.html()).not.toContain('onclick')
   })
 
-  it('puts headings below the page and topic titles', () => {
+  it('puts headings below the page title', () => {
     const wrapper = render([
       { type: 'header', data: { text: 'One', level: 1 } },
       { type: 'header', data: { text: 'Four', level: 4 } },
     ])
-    expect(wrapper.find('h3').text()).toBe('One')
-    expect(wrapper.find('h6').text()).toBe('Four')
+    expect(wrapper.find('h2').text()).toBe('One')
+    expect(wrapper.find('h5').text()).toBe('Four')
   })
 
   it('renders nested ordered lists with their numbering', () => {
