@@ -118,6 +118,14 @@ class SecurityConfig {
                     // FR-2.2: browsing categories needs no login; managing them does (below).
                     .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/*")
                     .permitAll()
+                    // Reading topics and posts is public too (guests can read everything, section
+                    // 5).
+                    .requestMatchers(
+                        HttpMethod.GET,
+                        "/api/categories/*/topics",
+                        "/api/topics/*",
+                        "/api/posts/*/location")
+                    .permitAll()
                     // FR-2.3 and the rest of the admin panel (M8): every admin endpoint lives under
                     // this path, so authorization for all of them is this one rule.
                     .requestMatchers("/api/admin/**")

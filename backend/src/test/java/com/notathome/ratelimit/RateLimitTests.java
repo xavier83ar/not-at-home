@@ -10,11 +10,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 
 import com.notathome.support.AsyncTasks;
 import com.notathome.support.Csrf;
+import com.notathome.support.Forum;
 import com.notathome.support.ManualClock;
 import com.notathome.support.RateLimitedIntegrationTest;
 import com.notathome.support.RecordingMailSender;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
+import com.notathome.users.UserRole;
 import jakarta.servlet.http.Cookie;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
@@ -314,6 +316,29 @@ class RateLimitTests {
     }
 
     assertThat(status(resend(session, IP))).isEqualTo(429);
+  }
+
+  @Test
+  void postingIsLimitedPerClientForTopicsAndReplies() throws Exception {
+    Cookie session =
+        Forum.userSession(mockMvc, users, passwordEncoder, "alice", UserRole.USER, true);
+    for (int i = 0; i < 30; i++) {
+      limiter.consume(RateLimitPolicy.POSTING, IP);
+    }
+    String body = "{\"categoryId\":1,\"title\":\"t\",\"content\":" + Forum.document("x") + "}";
+
+    assertThat(status(topicRequest(session, "/api/topics", IP, body))).isEqualTo(429);
+    assertThat(status(topicRequest(session, "/api/topics/1/posts", IP, body))).isEqualTo(429);
+    assertThat(status(topicRequest(session, "/api/topics", "198.51.100.41", body)))
+        .as("another client is not affected")
+        .isEqualTo(400);
+  }
+
+  private MvcResult topicRequest(Cookie session, String path, String ip, String json)
+      throws Exception {
+    return mockMvc
+        .perform(request(path, ip, json).cookie(session).with(Csrf.token(mockMvc)))
+        .andReturn();
   }
 
   private MvcResult resend(Cookie session, String ip) throws Exception {

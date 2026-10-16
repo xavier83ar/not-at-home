@@ -116,8 +116,9 @@ Requests that can be abused are limited (NFR-2). Over a limit the answer is `429
 | 5 per hour, per email address | verification emails: the one at sign-up plus every resend |
 | 3 per hour, per email address | password reset emails; over the limit nothing is sent and the request isn't told, so the answer never reveals whether an address has an account |
 | 30 per hour, per client | upload a file |
+| 30 per hour, per client | start a topic or reply |
 
-Add `@RateLimited(RateLimitPolicy.X)` to an endpoint to limit it per client (a new policy is one line in `RateLimitPolicy`; posting will get one in M4). Requests rejected by CSRF protection don't count, reads are never limited, and malformed requests do count.
+Add `@RateLimited(RateLimitPolicy.X)` to an endpoint to limit it per client (a new policy is one line in `RateLimitPolicy`). Requests rejected by CSRF protection don't count, reads are never limited, and malformed requests do count.
 
 In local testing you may legitimately sign up or log in more than that. Start the backend with `APP_RATE_LIMIT_ENABLED=false` to switch the limits off (the backend's own tests do this too, except the ones about the limits).
 

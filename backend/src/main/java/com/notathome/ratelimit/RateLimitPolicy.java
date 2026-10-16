@@ -24,6 +24,8 @@ public enum RateLimitPolicy {
   RESEND_VERIFICATION(10, Duration.ofHours(1)),
   /** Per IP. Reads (serving a file) are never limited; this only bounds new uploads. */
   UPLOAD(30, Duration.ofHours(1)),
+  /** Per IP. Starting topics, replying and editing posts share it (NFR-2). */
+  POSTING(30, Duration.ofHours(1)),
 
   /**
    * Per email address, shared by the registration email and every resend. Stops someone who

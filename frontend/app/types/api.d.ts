@@ -52,6 +52,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/topics/{id}/posts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/verify-email": {
         parameters: {
             query?: never;
@@ -173,7 +205,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create"];
+        post: operations["create_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -188,6 +220,38 @@ export interface paths {
             cookie?: never;
         };
         get: operations["serve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/topics/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/posts/{id}/location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["location"];
         put?: never;
         post?: never;
         delete?: never;
@@ -276,6 +340,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/categories/{slug}/topics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -315,6 +395,59 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
+        CreateTopicRequest: {
+            /** Format: int64 */
+            categoryId: number;
+            title: string;
+            /** @description Editor.js document: {blocks: [{type, data}]} */
+            content: string;
+        };
+        AuthorResponse: {
+            /** Format: int64 */
+            id: number;
+            username: string;
+            displayName: string;
+            avatarUrl?: string | null;
+            /** @enum {string} */
+            role: "USER" | "ADMIN";
+        };
+        TopicSummary: {
+            /** Format: int64 */
+            id: number;
+            slug: string;
+            title: string;
+            author: components["schemas"]["AuthorResponse"];
+            pinned: boolean;
+            locked: boolean;
+            /** Format: int32 */
+            replyCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastPostAt: string;
+            /** Format: int64 */
+            lastPostId: number;
+        };
+        ReplyRequest: {
+            /** @description Editor.js document: {blocks: [{type, data}]} */
+            content: string;
+        };
+        PostResponse: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            topicId: number;
+            author: components["schemas"]["AuthorResponse"];
+            /** @description Editor.js document: {blocks: [{type, data}]} */
+            content?: string | null;
+            removed: boolean;
+            /** @description Whether this is the topic's opening post */
+            opening: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            editedAt?: string | null;
+        };
         VerifyEmailRequest: {
             token: string;
         };
@@ -349,9 +482,62 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        CategoryRef: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            slug: string;
+        };
+        PageResponsePostResponse: {
+            items: components["schemas"]["PostResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int64 */
+            totalItems: number;
+        };
+        TopicDetail: {
+            /** Format: int64 */
+            id: number;
+            slug: string;
+            title: string;
+            category: components["schemas"]["CategoryRef"];
+            author: components["schemas"]["AuthorResponse"];
+            pinned: boolean;
+            locked: boolean;
+            /** Format: int32 */
+            replyCount: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            lastPostAt: string;
+        };
+        TopicPageResponse: {
+            topic: components["schemas"]["TopicDetail"];
+            posts: components["schemas"]["PageResponsePostResponse"];
+        };
+        PostLocation: {
+            /** Format: int64 */
+            postId: number;
+            /** Format: int64 */
+            topicId: number;
+            topicSlug: string;
+            /** Format: int32 */
+            page: number;
+        };
         AppInfo: {
             name?: string;
             version?: string;
+        };
+        PageResponseTopicSummary: {
+            items: components["schemas"]["TopicSummary"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int64 */
+            totalItems: number;
         };
     };
     responses: never;
@@ -453,6 +639,56 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UploadResponse"];
+                };
+            };
+        };
+    };
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTopicRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TopicSummary"];
+                };
+            };
+        };
+    };
+    reply: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplyRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"];
                 };
             };
         };
@@ -607,7 +843,7 @@ export interface operations {
             };
         };
     };
-    create: {
+    create_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -649,6 +885,52 @@ export interface operations {
                 };
                 content: {
                     "*/*": string;
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["TopicPageResponse"];
+                };
+            };
+        };
+    };
+    location: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostLocation"];
                 };
             };
         };
@@ -749,6 +1031,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["CategoryResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseTopicSummary"];
                 };
             };
         };
