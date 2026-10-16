@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-class UploadService {
+public class UploadService {
 
   static final long MAX_SIZE_BYTES = 5L * 1024 * 1024;
 
@@ -28,7 +28,20 @@ class UploadService {
     if (file.isEmpty()) {
       throw fieldError("is required");
     }
-    byte[] content = readBytes(file);
+    return storeValidated(readBytes(file), ownerId);
+  }
+
+  /**
+   * For content that doesn't come from an HTTP request (seed images bundled with the app), so
+   * there's no {@link MultipartFile} to read from. Still runs the same checks: a seed asset that
+   * isn't really a JPEG, PNG or WebP under 5 MB is a bug worth failing loudly on, not storing.
+   */
+  @Transactional
+  public Upload storeTrusted(byte[] content, Long ownerId) {
+    return storeValidated(content, ownerId);
+  }
+
+  private Upload storeValidated(byte[] content, Long ownerId) {
     if (content.length > MAX_SIZE_BYTES) {
       throw fieldError("must be 5 MB or smaller");
     }

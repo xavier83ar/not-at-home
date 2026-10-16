@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
-class AdminCategoryService {
+public class AdminCategoryService {
 
   private final CategoryRepository categories;
   private final UploadRepository uploads;
@@ -22,6 +22,12 @@ class AdminCategoryService {
   AdminCategoryService(CategoryRepository categories, UploadRepository uploads) {
     this.categories = categories;
     this.uploads = uploads;
+  }
+
+  /** For the seed command, which has no HTTP request to build a {@link CategoryRequest} from. */
+  @Transactional
+  public Category create(String name, String description, Long coverUploadId) {
+    return create(new CategoryRequest(name, description, coverUploadId));
   }
 
   @Transactional

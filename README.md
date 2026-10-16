@@ -88,6 +88,21 @@ UPDATE users SET email_verified_at = now() WHERE username = 'alice';
 
 For backend code, mark endpoints that need a verified email with `@RequiresVerifiedEmail` (checked against the database on every call, so verifying takes effect in sessions that are already open). Verification links expire after 24 hours and work once; only their hashes are stored.
 
+## Seed data
+
+A fresh database can be seeded with one command (FR-10.3): a default admin, a default user (both already verified, so they can post right away) and five categories (Hiking, Climbing, Camping, Gear, Trip Reports) with cover images. It refuses to run if the database already has any users (FR-10.4), so it's safe to run on every deploy, not just the first.
+
+Credentials come from environment variables, never hard-coded:
+
+```sh
+SPRING_PROFILES_ACTIVE=dev,seed \
+SEED_ADMIN_USERNAME=admin SEED_ADMIN_EMAIL=admin@example.com SEED_ADMIN_PASSWORD='change-me-now' \
+SEED_USER_USERNAME=rider SEED_USER_EMAIL=rider@example.com SEED_USER_PASSWORD='change-me-too' \
+./mvnw spring-boot:run
+```
+
+(in `backend/`; in production, add `seed` to `SPRING_PROFILES_ACTIVE` instead). The `seed` profile is a one-off install step, not a server: it seeds (or logs why it can't, and exits with a non-zero status) and then exits, rather than going on to serve requests. Demo topics are added once M4 brings topics.
+
 ## Rate limits
 
 Requests that can be abused are limited (NFR-2). Over a limit the answer is `429` with a `Retry-After` header and, in the body, `code: RATE_LIMITED` and `retryAfterSeconds`; the forms show how long to wait. Limits refill continuously (5 per hour is one every 12 minutes) and live in memory, which is enough for one backend instance.
