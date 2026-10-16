@@ -1,0 +1,162 @@
+package com.notathome.topics;
+
+import com.notathome.categories.Category;
+import com.notathome.categories.CategoryRepository;
+import com.notathome.common.FieldErrorsException;
+import com.notathome.common.PageResponse;
+import com.notathome.common.Slug;
+import com.notathome.content.EditorContentProcessor;
+import com.notathome.content.ProcessedContent;
+import com.notathome.posts.Post;
+import com.notathome.posts.PostRepository;
+import com.notathome.posts.PostResponse;
+import com.notathome.posts.PostResponses;
+import com.notathome.users.AuthorResponse;
+import com.notathome.users.Authors;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+import tools.jackson.databind.JsonNode;
+
+@Service
+public class TopicService {
+
+  private final TopicRepository topics;
+  private final PostRepository posts;
+  private final CategoryRepository categories;
+  private final EditorContentProcessor contentProcessor;
+  private final TopicCounters counters;
+  private final Authors authors;
+  private final PostResponses postResponses;
+
+  TopicService(
+      TopicRepository topics,
+      PostRepository posts,
+      CategoryRepository categories,
+      EditorContentProcessor contentProcessor,
+      TopicCounters counters,
+      Authors authors,
+      PostResponses postResponses) {
+    this.topics = topics;
+    this.posts = posts;
+    this.categories = categories;
+    this.contentProcessor = contentProcessor;
+    this.counters = counters;
+    this.authors = authors;
+    this.postResponses = postResponses;
+  }
+
+  /** FR-3.1: the topic and its opening post are saved together or not at all. */
+  @Transactional
+  TopicSummary create(Long authorId, CreateTopicRequest request) {
+    Category category =
+        categories
+            .findByIdAndDeletedAtIsNull(request.categoryId())
+            .orElseThrow(
+                () ->
+                    new FieldErrorsException(Map.of("categoryId", List.of("category not found"))));
+    ProcessedContent content = contentProcessor.process(request.content());
+
+    String title = request.title().strip();
+    Instant now = Instant.now();
+    Topic topic =
+        topics.save(new Topic(category.getId(), authorId, title, Slug.of(title, "topic"), now));
+    Post opening = posts.save(new Post(topic.getId(), authorId, content, now));
+    counters.refresh(topic);
+    return summaries(List.of(topic)).getFirst();
+  }
+
+  /** FR-4.1. Refused on a locked topic, whoever asks (FR-3.4). */
+  @Transactional
+  PostResponse reply(Long topicId, Long authorId, JsonNode document) {
+    Topic topic = topics.findActiveForUpdate(topicId).orElseThrow(TopicService::notFound);
+    if (topic.isLocked()) {
+      throw new TopicLockedException();
+    }
+    ProcessedContent content = contentProcessor.process(document);
+    Post post = posts.save(new Post(topicId, authorId, content, Instant.now()));
+    counters.refresh(topic);
+    return postResponses.toResponses(List.of(post), openingPostId(topicId), false).getFirst();
+  }
+
+  /** FR-3.2, FR-3.3, FR-7.1: a category's topics. Empty when the category has none. */
+  @Transactional(readOnly = true)
+  Optional<PageResponse<TopicSummary>> list(String categorySlug, int page) {
+    return categories
+        .findBySlugAndDeletedAtIsNull(categorySlug)
+        .map(
+            category ->
+                PageResponse.of(
+                    topics.findByCategoryIdAndDeletedAtIsNullOrderByPinnedDescLastPostAtDescIdDesc(
+                        category.getId(), PageResponse.request(page, Sort.unsorted())),
+                    this::summaries));
+  }
+
+  /** FR-4.3: a topic and one page of its posts. */
+  @Transactional(readOnly = true)
+  TopicPageResponse getPage(Long id, int page, boolean viewerIsAdmin) {
+    Topic topic = topics.findByIdAndDeletedAtIsNull(id).orElseThrow(TopicService::notFound);
+    Page<Post> found =
+        posts.findByTopicIdOrderByIdAsc(id, PageResponse.request(page, Sort.unsorted()));
+    Long openingId = openingPostId(id);
+    PageResponse<PostResponse> postPage =
+        PageResponse.of(found, list -> postResponses.toResponses(list, openingId, viewerIsAdmin));
+    return new TopicPageResponse(detail(topic), postPage);
+  }
+
+  private TopicDetail detail(Topic topic) {
+    Category category = categories.findById(topic.getCategoryId()).orElseThrow();
+    AuthorResponse author = authors.byId(List.of(topic.getAuthorId())).get(topic.getAuthorId());
+    return new TopicDetail(
+        topic.getId(),
+        topic.getSlug(),
+        topic.getTitle(),
+        new CategoryRef(category.getId(), category.getName(), category.getSlug()),
+        author,
+        topic.isPinned(),
+        topic.isLocked(),
+        topic.getReplyCount(),
+        topic.getCreatedAt(),
+        topic.getLastPostAt());
+  }
+
+  private List<TopicSummary> summaries(List<Topic> found) {
+    Map<Long, AuthorResponse> byAuthor =
+        authors.byId(found.stream().map(Topic::getAuthorId).toList());
+    Map<Long, Long> latestPost = new HashMap<>();
+    posts
+        .latestVisiblePosts(found.stream().map(Topic::getId).toList())
+        .forEach(latest -> latestPost.put(latest.topicId(), latest.postId()));
+    return found.stream()
+        .map(
+            topic ->
+                new TopicSummary(
+                    topic.getId(),
+                    topic.getSlug(),
+                    topic.getTitle(),
+                    byAuthor.get(topic.getAuthorId()),
+                    topic.isPinned(),
+                    topic.isLocked(),
+                    topic.getReplyCount(),
+                    topic.getCreatedAt(),
+                    topic.getLastPostAt(),
+                    latestPost.get(topic.getId())))
+        .toList();
+  }
+
+  private Long openingPostId(Long topicId) {
+    return posts.findFirstByTopicIdOrderByIdAsc(topicId).orElseThrow().getId();
+  }
+
+  private static ResponseStatusException notFound() {
+    return new ResponseStatusException(HttpStatus.NOT_FOUND);
+  }
+}
