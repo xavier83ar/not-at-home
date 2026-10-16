@@ -100,10 +100,19 @@ Requests that can be abused are limited (NFR-2). Over a limit the answer is `429
 | 30 per hour, per client | verify an email address |
 | 5 per hour, per email address | verification emails: the one at sign-up plus every resend |
 | 3 per hour, per email address | password reset emails; over the limit nothing is sent and the request isn't told, so the answer never reveals whether an address has an account |
+| 30 per hour, per client | upload a file |
 
 Add `@RateLimited(RateLimitPolicy.X)` to an endpoint to limit it per client (a new policy is one line in `RateLimitPolicy`; posting will get one in M4). Requests rejected by CSRF protection don't count, reads are never limited, and malformed requests do count.
 
 In local testing you may legitimately sign up or log in more than that. Start the backend with `APP_RATE_LIMIT_ENABLED=false` to switch the limits off (the backend's own tests do this too, except the ones about the limits).
+
+## Uploads
+
+Images (avatars, category covers, post images) are checked by content, not by extension or declared content type: only JPEG, PNG and WebP are accepted, up to 5 MB. Uploading needs a login, but not a verified email, since settings and profile edits don't require one either. Files are stored under a random name and served with `X-Content-Type-Options: nosniff` and a locked-down `Content-Security-Policy`, so a browser never runs one as a script (NFR-2).
+
+Storage is local disk, behind the `UploadStorage` interface (file storage for production is still **TBD**, see `docs/requirements.md` section 10; switching to object storage later means a new implementation, not a change to the rest of the code). The directory comes from `APP_UPLOADS_DIR`; in dev it defaults to `backend/uploads/` (gitignored), so nothing to set up, but production must point it at a volume that survives restarts.
+
+`POST /api/uploads` (`multipart/form-data`, field `file`) returns the file's id and public URL. `GET /api/uploads/<key>` serves it and is public, since guests need to see category covers and avatars too.
 
 ### Which client? (read this before deploying)
 

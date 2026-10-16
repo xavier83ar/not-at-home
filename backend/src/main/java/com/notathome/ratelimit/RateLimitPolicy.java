@@ -22,6 +22,8 @@ public enum RateLimitPolicy {
   VERIFY_EMAIL(30, Duration.ofHours(1)),
   /** Per IP. */
   RESEND_VERIFICATION(10, Duration.ofHours(1)),
+  /** Per IP. Reads (serving a file) are never limited; this only bounds new uploads. */
+  UPLOAD(30, Duration.ofHours(1)),
 
   /**
    * Per email address, shared by the registration email and every resend. Stops someone who
