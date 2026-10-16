@@ -253,8 +253,14 @@ class PostTests {
         .andExpect(jsonPath("$.posts.items[0].removed").value(true))
         .andExpect(jsonPath("$.posts.items[0].content.blocks[0].data.text").value("Opening post"));
     mockMvc
+        .perform(get("/api/posts/" + openingId + "/location").cookie(admin))
+        .andExpect(jsonPath("$.topicId").value(topicId))
+        .andExpect(jsonPath("$.topicSlug").value("hidden-title"));
+    // Everyone else is given the topic's id but not a slug, which would spell out the title.
+    mockMvc
         .perform(get("/api/posts/" + openingId + "/location"))
-        .andExpect(jsonPath("$.topicId").value(topicId));
+        .andExpect(jsonPath("$.topicId").value(topicId))
+        .andExpect(jsonPath("$.topicSlug").value(""));
   }
 
   @Test
