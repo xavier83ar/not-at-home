@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+    "/api/posts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["edit"];
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/categories/{id}": {
         parameters: {
             query?: never;
@@ -14,7 +30,7 @@ export interface paths {
         get?: never;
         put: operations["update"];
         post?: never;
-        delete: operations["delete"];
+        delete: operations["delete_1"];
         options?: never;
         head?: never;
         patch?: never;
@@ -360,6 +376,42 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        EditorBlock: {
+            type: string;
+            data: {
+                [key: string]: unknown;
+            };
+        };
+        EditorDocument: {
+            blocks: components["schemas"]["EditorBlock"][];
+        };
+        PostContentRequest: {
+            content: components["schemas"]["EditorDocument"];
+        };
+        AuthorResponse: {
+            /** Format: int64 */
+            id: number;
+            username: string;
+            displayName: string;
+            avatarUrl?: string | null;
+            /** @enum {string} */
+            role: "USER" | "ADMIN";
+        };
+        PostResponse: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            topicId: number;
+            author: components["schemas"]["AuthorResponse"];
+            content?: components["schemas"]["EditorDocument"];
+            removed: boolean;
+            /** @description Whether this is the topic's opening post */
+            opening: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            editedAt?: string | null;
+        };
         CategoryRequest: {
             name: string;
             description: string;
@@ -395,29 +447,11 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
-        EditorBlock: {
-            type: string;
-            data: {
-                [key: string]: unknown;
-            };
-        };
         CreateTopicRequest: {
             /** Format: int64 */
             categoryId: number;
             title: string;
             content: components["schemas"]["EditorDocument"];
-        };
-        EditorDocument: {
-            blocks: components["schemas"]["EditorBlock"][];
-        };
-        AuthorResponse: {
-            /** Format: int64 */
-            id: number;
-            username: string;
-            displayName: string;
-            avatarUrl?: string | null;
-            /** @enum {string} */
-            role: "USER" | "ADMIN";
         };
         TopicSummary: {
             /** Format: int64 */
@@ -435,24 +469,6 @@ export interface components {
             lastPostAt: string;
             /** Format: int64 */
             lastPostId: number;
-        };
-        ReplyRequest: {
-            content: components["schemas"]["EditorDocument"];
-        };
-        PostResponse: {
-            /** Format: int64 */
-            id: number;
-            /** Format: int64 */
-            topicId: number;
-            author: components["schemas"]["AuthorResponse"];
-            content?: components["schemas"]["EditorDocument"];
-            removed: boolean;
-            /** @description Whether this is the topic's opening post */
-            opening: boolean;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            editedAt?: string | null;
         };
         VerifyEmailRequest: {
             token: string;
@@ -508,7 +524,6 @@ export interface components {
             id: number;
             slug: string;
             title: string;
-            category: components["schemas"]["CategoryRef"];
             author: components["schemas"]["AuthorResponse"];
             pinned: boolean;
             locked: boolean;
@@ -520,8 +535,11 @@ export interface components {
             lastPostAt: string;
         };
         TopicPageResponse: {
-            topic: components["schemas"]["TopicDetail"];
-            posts: components["schemas"]["PageResponsePostResponse"];
+            removed: boolean;
+            category: components["schemas"]["CategoryRef"];
+            topic?: components["schemas"]["TopicDetail"];
+            posts?: components["schemas"]["PageResponsePostResponse"];
+            recentTopics: components["schemas"]["TopicSummary"][];
         };
         PostLocation: {
             /** Format: int64 */
@@ -545,6 +563,9 @@ export interface components {
             /** Format: int64 */
             totalItems: number;
         };
+        DeletePostResponse: {
+            topicRemoved: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -554,6 +575,54 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    edit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PostContentRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PostResponse"];
+                };
+            };
+        };
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["DeletePostResponse"];
+                };
+            };
+        };
+    };
     update: {
         parameters: {
             query?: never;
@@ -580,7 +649,7 @@ export interface operations {
             };
         };
     };
-    delete: {
+    delete_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -684,7 +753,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ReplyRequest"];
+                "application/json": components["schemas"]["PostContentRequest"];
             };
         };
         responses: {

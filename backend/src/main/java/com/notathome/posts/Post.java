@@ -75,4 +75,16 @@ public class Post {
   public boolean isDeleted() {
     return deletedAt != null;
   }
+
+  /** FR-5.1: replaces the content and marks the post as edited. */
+  void edit(ProcessedContent content, Instant at) {
+    this.content = content.json();
+    this.searchText = content.searchText();
+    this.editedAt = at;
+  }
+
+  /** FR-5.5: the row stays; every list and count skips it from now on. */
+  void remove(Instant at) {
+    this.deletedAt = at;
+  }
 }

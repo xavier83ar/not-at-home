@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -25,6 +26,25 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
   @Query("select max(p.createdAt) from Post p where p.topicId = :topicId and p.deletedAt is null")
   Optional<Instant> latestVisibleAt(@Param("topicId") Long topicId);
+
+  /** Read without loading the post, so the topic can be locked before the post itself is read. */
+  @Query("select p.topicId from Post p where p.id = :id")
+  Optional<Long> findTopicId(@Param("id") Long id);
+
+  /** Removing a topic removes all its posts too (FR-5.4). */
+  @Modifying
+  @Query("update Post p set p.deletedAt = :at where p.topicId = :topicId and p.deletedAt is null")
+  void removeAllOfTopic(@Param("topicId") Long topicId, @Param("at") Instant at);
+
+  record CategoryPostCount(Long categoryId, long posts) {}
+
+  /** Visible posts in each category's active topics, for the category pages (FR-2.2). */
+  @Query(
+      "select new com.notathome.posts.PostRepository$CategoryPostCount(t.categoryId, count(p))"
+          + " from Post p join Topic t on p.topicId = t.id"
+          + " where t.deletedAt is null and p.deletedAt is null and t.categoryId in :categoryIds"
+          + " group by t.categoryId")
+  List<CategoryPostCount> countByCategory(@Param("categoryIds") Collection<Long> categoryIds);
 
   record LatestPost(Long topicId, Long postId) {}
 

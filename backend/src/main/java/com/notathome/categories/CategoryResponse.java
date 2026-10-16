@@ -7,8 +7,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 /**
- * FR-2.2. {@code topicCount}, {@code postCount} and {@code latestActivityAt} are always zero/null
- * until M4 adds topics; this response shape is ready for them.
+ * FR-2.2. The counts cover active topics and visible posts only; {@code latestActivityAt} is null
+ * for a category without topics. The admin endpoints leave all three at zero/null: nothing there
+ * needs them.
  */
 public record CategoryResponse(
     @Schema(requiredMode = REQUIRED) Long id,
@@ -25,6 +26,15 @@ public record CategoryResponse(
 
   /** {@code coverImageUrl} is resolved by the caller: a category only stores the upload's id. */
   static CategoryResponse from(Category category, String coverImageUrl) {
+    return from(category, coverImageUrl, 0, 0, null);
+  }
+
+  static CategoryResponse from(
+      Category category,
+      String coverImageUrl,
+      long topicCount,
+      long postCount,
+      Instant latestActivityAt) {
     return new CategoryResponse(
         category.getId(),
         category.getName(),
@@ -33,8 +43,8 @@ public record CategoryResponse(
         coverImageUrl,
         category.getCoverUploadId(),
         category.getPosition(),
-        0,
-        0,
-        null);
+        topicCount,
+        postCount,
+        latestActivityAt);
   }
 }

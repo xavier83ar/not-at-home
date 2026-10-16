@@ -1,6 +1,9 @@
 package com.notathome.topics;
 
 import jakarta.persistence.LockModeType;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,4 +27,20 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
   /** Pinned topics first, then the most recently active (FR-3.3). */
   Page<Topic> findByCategoryIdAndDeletedAtIsNullOrderByPinnedDescLastPostAtDescIdDesc(
       Long categoryId, Pageable pageable);
+
+  /** FR-5.7: the most recently active topics of a category, pinned or not. */
+  List<Topic> findTop5ByCategoryIdAndDeletedAtIsNullOrderByLastPostAtDescIdDesc(Long categoryId);
+
+  /** FR-2.4: a category with active topics cannot be deleted. */
+  boolean existsByCategoryIdAndDeletedAtIsNull(Long categoryId);
+
+  record CategoryTopicStats(Long categoryId, long topics, Instant latestActivityAt) {}
+
+  /** Topic count and latest activity of each category, for the category pages (FR-2.2). */
+  @Query(
+      "select new com.notathome.topics.TopicRepository$CategoryTopicStats("
+          + "t.categoryId, count(t), max(t.lastPostAt))"
+          + " from Topic t where t.deletedAt is null and t.categoryId in :categoryIds"
+          + " group by t.categoryId")
+  List<CategoryTopicStats> statsByCategory(@Param("categoryIds") Collection<Long> categoryIds);
 }

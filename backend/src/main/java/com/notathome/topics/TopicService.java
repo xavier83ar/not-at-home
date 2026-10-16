@@ -100,26 +100,42 @@ public class TopicService {
                     this::summaries));
   }
 
-  /** FR-4.3: a topic and one page of its posts. */
+  /**
+   * FR-4.3: a topic and one page of its posts. A removed topic answers with {@code removed: true}
+   * and the five most recently active topics of its category (FR-5.7); only admins also get what
+   * was in it (FR-5.8), so a removed title or post is not public.
+   */
   @Transactional(readOnly = true)
   TopicPageResponse getPage(Long id, int page, boolean viewerIsAdmin) {
-    Topic topic = topics.findByIdAndDeletedAtIsNull(id).orElseThrow(TopicService::notFound);
+    Topic topic = topics.findById(id).orElseThrow(TopicService::notFound);
+    Category category = categories.findById(topic.getCategoryId()).orElseThrow();
+    CategoryRef categoryRef =
+        new CategoryRef(category.getId(), category.getName(), category.getSlug());
+
+    List<TopicSummary> recent = List.of();
+    if (topic.isDeleted()) {
+      recent =
+          summaries(
+              topics.findTop5ByCategoryIdAndDeletedAtIsNullOrderByLastPostAtDescIdDesc(
+                  category.getId()));
+      if (!viewerIsAdmin) {
+        return new TopicPageResponse(true, categoryRef, null, null, recent);
+      }
+    }
     Page<Post> found =
         posts.findByTopicIdOrderByIdAsc(id, PageResponse.request(page, Sort.unsorted()));
     Long openingId = openingPostId(id);
     PageResponse<PostResponse> postPage =
         PageResponse.of(found, list -> postResponses.toResponses(list, openingId, viewerIsAdmin));
-    return new TopicPageResponse(detail(topic), postPage);
+    return new TopicPageResponse(topic.isDeleted(), categoryRef, detail(topic), postPage, recent);
   }
 
   private TopicDetail detail(Topic topic) {
-    Category category = categories.findById(topic.getCategoryId()).orElseThrow();
     AuthorResponse author = authors.byId(List.of(topic.getAuthorId())).get(topic.getAuthorId());
     return new TopicDetail(
         topic.getId(),
         topic.getSlug(),
         topic.getTitle(),
-        new CategoryRef(category.getId(), category.getName(), category.getSlug()),
         author,
         topic.isPinned(),
         topic.isLocked(),
