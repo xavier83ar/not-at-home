@@ -1,0 +1,116 @@
+# Runs the whole forum from source with Docker only: PostgreSQL, Mailpit, the backend (after the
+# database is migrated and seeded) and the frontend. A demo, NOT a production setup: see README,
+# "Quick demo".
+#
+#   cd demo && docker compose up --build
+#
+# Every setting has a default, so a .env file is optional (see .env.example).
+
+# A name of its own, so this never shares containers or volumes with the dev setup in ../compose.yaml.
+name: not-at-home-demo
+
+x-backend-environment: &backend-environment
+  SPRING_PROFILES_ACTIVE: prod
+  DB_URL: jdbc:postgresql://postgres:5432/notathome
+  DB_USER: notathome
+  DB_PASSWORD: ${DB_PASSWORD:-notathome}
+  MAIL_HOST: mailpit
+  MAIL_PORT: 1025
+  MAIL_FROM: noreply@notathome.local
+  FRONTEND_URL: ${SITE_URL:-http://localhost:3000}
+  APP_UPLOADS_DIR: /var/lib/notathome/uploads
+  # The prod profile marks the session cookie Secure, which a browser drops over plain http
+  # (always for Safari, and for any address other than localhost). The demo has no TLS.
+  SERVER_SERVLET_SESSION_COOKIE_SECURE: "false"
+  # For developers poking at the API.
+  SPRINGDOC_API_DOCS_ENABLED: "true"
+  SPRINGDOC_SWAGGER_UI_ENABLED: "true"
+
+x-backend: &backend
+  image: not-at-home-backend:demo
+  build:
+    context: ../backend
+  volumes:
+    - uploads:/var/lib/notathome/uploads
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: notathome
+      POSTGRES_USER: notathome
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-notathome}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notathome -d notathome"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025" # web UI; every email the forum sends lands here
+
+  # One-off: applies the migrations, creates the admin, the user, the categories and the demo
+  # topics, then exits. It does nothing if the database already has users, so `up` is safe to
+  # repeat. The backend starts only once this has finished.
+  seed:
+    <<: *backend
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-environment
+      SPRING_PROFILES_ACTIVE: prod,seed
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@notathome.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-admin-password}
+      SEED_USER_USERNAME: ${SEED_USER_USERNAME:-rider}
+      SEED_USER_EMAIL: ${SEED_USER_EMAIL:-rider@notathome.local}
+      SEED_USER_PASSWORD: ${SEED_USER_PASSWORD:-rider-password}
+
+  # Not published: only the frontend talks to it (the browser goes through the frontend's /api proxy).
+  backend:
+    <<: *backend
+    restart: unless-stopped
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+    environment: *backend-environment
+    healthcheck:
+      # The JRE image has no curl or wget, so talk HTTP through bash.
+      test:
+        - CMD
+        - bash
+        - -c
+        - >-
+          exec 3<>/dev/tcp/localhost/8080
+          && printf 'GET /api/health HTTP/1.0\r\n\r\n' >&3
+          && grep -q '"status":"UP"' <&3
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  frontend:
+    image: not-at-home-frontend:demo
+    build:
+      context: ../frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      NUXT_BACKEND_URL: http://backend:8080
+      NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+
+volumes:
+  postgres-data:
+  uploads:

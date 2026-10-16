@@ -24,6 +24,36 @@ A web forum for outdoor enthusiasts. Nuxt frontend (SSR) and Spring Boot REST AP
 - Node 24 and npm (`nvm use` in `frontend/` picks the right version; current Nuxt needs Node 22.19+ or 24)
 - Docker with Compose (PostgreSQL and Mailpit in dev; Testcontainers in tests)
 
+## Quick demo (Docker only)
+
+To try the forum without installing Java, Node or anything else, you only need Docker with Compose:
+
+```sh
+cd demo
+docker compose up --build
+```
+
+The first run builds both images (a few minutes); later runs start in seconds. When it settles:
+
+| | |
+|---|---|
+| Site | <http://localhost:3000> |
+| Emails (Mailpit) | <http://localhost:8025> |
+| API docs | <http://localhost:3000/api/swagger-ui.html> |
+
+It starts PostgreSQL, Mailpit, a one-off `seed` container (applies the migrations and creates the demo content: five categories, three topics and two accounts) and then the backend and the frontend, in that order. Sign in with:
+
+| Account | Username | Password |
+|---|---|---|
+| Admin | `admin` | `admin-password` |
+| Member | `rider` | `rider-password` |
+
+Or sign up with any address: the verification email arrives in Mailpit. Everything has a default, so nothing is required; to change ports or credentials, copy [`demo/.env.example`](demo/.env.example) to `demo/.env`. If a port is taken (for example by the dev setup's Mailpit), set `MAILPIT_PORT` or `FRONTEND_PORT` (and `SITE_URL` to match for the latter).
+
+Data lives in Docker volumes and survives `docker compose down`; `docker compose down -v` wipes it, and the next `up` seeds again. Pull new changes and run `docker compose up --build` to update.
+
+This is a demo, not a deployment: no TLS (so the session cookie is not `Secure`), default passwords, Swagger UI on, and the seed credentials are public. The demo has its own Compose project name, so it never touches the dev database from [`compose.yaml`](compose.yaml). For production see [Configuration](#configuration).
+
 ## Running in dev
 
 ```sh
@@ -174,5 +204,6 @@ backend/      Spring Boot app (Maven wrapper)
 frontend/     Nuxt app + Dockerfile
 docs/         requirements, plan, layout references
 design/       brand identity and assets
-compose.yaml  local dependencies: PostgreSQL, Mailpit
+compose.yaml  local dependencies for dev: PostgreSQL, Mailpit
+demo/         Docker-only demo of the whole app (see "Quick demo")
 ```

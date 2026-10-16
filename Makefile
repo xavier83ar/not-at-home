@@ -1,4 +1,12 @@
-.PHONY: dev-db dev-backend dev-frontend test images api-types
+.PHONY: demo demo-reset dev-db dev-backend dev-frontend test images api-types
+
+# The whole app from source, Docker only (see README, "Quick demo").
+demo:
+	cd demo && docker compose up --build
+
+# Stops the demo and deletes its data.
+demo-reset:
+	cd demo && docker compose down -v
 
 dev-db:
 	docker compose up -d
