@@ -123,7 +123,9 @@ class SecurityConfig {
                     .requestMatchers(
                         HttpMethod.GET,
                         "/api/categories/*/topics",
+                        "/api/topics",
                         "/api/topics/*",
+                        "/api/home",
                         "/api/posts/*/location")
                     .permitAll()
                     // FR-2.3 and the rest of the admin panel (M8): every admin endpoint lives under

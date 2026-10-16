@@ -214,6 +214,34 @@ class TopicTests {
   }
 
   @Test
+  void allTopicsAreListedAcrossCategoriesForGuests() throws Exception {
+    Long climbingId = categories.create("Climbing", "Rock", null).getId();
+    for (int i = 1; i <= 8; i++) {
+      newTopic("Hiking " + i);
+    }
+    Long removed = newTopic("Removed");
+    jdbc.update("update topics set deleted_at = now() where id = ?", removed);
+    Forum.topic(mockMvc, alice, climbingId, "Climbing 1");
+    Forum.topic(mockMvc, alice, climbingId, "Climbing 2");
+    Forum.topic(mockMvc, alice, climbingId, "Climbing 3");
+
+    mockMvc
+        .perform(get("/api/topics"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.items.length()").value(10))
+        .andExpect(jsonPath("$.totalItems").value(11))
+        .andExpect(jsonPath("$.totalPages").value(2))
+        .andExpect(jsonPath("$.items[0].title").value("Climbing 3"))
+        .andExpect(jsonPath("$.items[0].category.slug").value("climbing"))
+        .andExpect(jsonPath("$.items[3].category.slug").value("hiking"));
+    mockMvc
+        .perform(get("/api/topics?page=2"))
+        .andExpect(jsonPath("$.items.length()").value(1))
+        .andExpect(jsonPath("$.items[0].title").value("Hiking 1"));
+    mockMvc.perform(get("/api/topics?page=3")).andExpect(status().isNotFound());
+  }
+
+  @Test
   void topicListsAndPostsArePaginatedByTen() throws Exception {
     for (int i = 1; i <= 12; i++) {
       newTopic("Topic " + i);

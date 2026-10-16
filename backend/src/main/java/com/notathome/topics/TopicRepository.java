@@ -31,6 +31,9 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
   /** FR-5.7: the most recently active topics of a category, pinned or not. */
   List<Topic> findTop5ByCategoryIdAndDeletedAtIsNullOrderByLastPostAtDescIdDesc(Long categoryId);
 
+  /** The most recently active topics of the whole forum, for the all-topics page. */
+  Page<Topic> findByDeletedAtIsNullOrderByLastPostAtDescIdDesc(Pageable pageable);
+
   /** FR-2.4: a category with active topics cannot be deleted. */
   boolean existsByCategoryIdAndDeletedAtIsNull(Long categoryId);
 

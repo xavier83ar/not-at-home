@@ -185,14 +185,16 @@ Goal: the core forum. Users start topics, reply, quote, edit and delete; everyth
 ### M5. Home page, navigation and SEO
 Goal: the front door looks like the design reference and search engines can index the forum.
 
-- [ ] Backend: highlighted categories endpoint (top 4 by posts in the last 30 days, filled by all-time posts), latest 5 topics, most active 5 users (last 30 days, excluding deleted and banned).
-- [ ] Home page (section 8.2): hero with category cards using their cover images, latest topics column (2/3) and most active users column (1/3).
+- [ ] Backend: `GET /api/home` with the highlighted categories (top 4 by posts in the last 30 days, filled by all-time posts), latest 5 topics and most active 5 users (last 30 days, excluding deleted and banned), and `GET /api/topics` listing every category's topics, paginated, for the all-topics page.
+- [ ] Home page (section 8.2): hero with category cards using their cover images, latest topics column (2/3) and most active users column (1/3). Its "see more" link goes to a new all-topics page (`/topics`).
 - [ ] Breadcrumbs on category and topic pages (NFR-1).
-- [ ] Top bar finished: working search box (submits to the search page from M6), "New topic", full user menu, mobile collapse.
-- [ ] SEO: titles and descriptions per page with `useSeoMeta`, canonical URLs, Open Graph tags (topic title, category image), `robots.txt`, sitemap of categories and topics.
+- [ ] Top bar finished: "New topic", user menu with the entries that exist so far (profile and settings arrive in M7, the admin panel in M8), mobile collapse. The search box stays a disabled placeholder until M6, which makes it work (submits to the search page).
+- [ ] SEO: titles and descriptions per page with `useSeoMeta`, canonical URLs (from a runtime `NUXT_PUBLIC_SITE_URL`), Open Graph tags (topic title, category image), `robots.txt`, `noindex` on login, register and similar pages. The sitemap of categories and topics is left out of the MVP (see the note below).
 - [ ] Empty states for categories without topics and for a fresh forum.
 
 **Done when:** the home page matches the design notes, and viewing the page source of home, category and topic pages shows the full content and meta tags.
+
+Sitemap: moved out of the MVP. Add it (categories and topics, from a small backend endpoint) when hosting and the public domain are known.
 
 ---
 
@@ -200,6 +202,7 @@ Goal: the front door looks like the design reference and search engines can inde
 Goal: FR-6 with PostgreSQL full-text search.
 
 - [ ] Migration: a generated `tsvector` column on posts (from `search_text`) and on topic titles, with GIN indexes. English text search configuration.
+- [ ] Top bar search box (placeholder since M1): enable it and submit to the search page.
 - [ ] Search endpoint: keywords, filters by category, author and date range, sort by relevance (default) or date, paginated (FR-6.1 to FR-6.4).
 - [ ] Snippets with the matched words highlighted (`ts_headline`), sanitized before display.
 - [ ] Deleted topics, deleted posts and posts from deleted accounts are excluded (FR-6.5).

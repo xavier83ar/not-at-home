@@ -75,7 +75,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["listAll"];
         put?: never;
         post: operations["create"];
         delete?: never;
@@ -308,6 +308,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/home": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["home"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/csrf": {
         parameters: {
             query?: never;
@@ -453,12 +469,19 @@ export interface components {
             title: string;
             content: components["schemas"]["EditorDocument"];
         };
+        CategoryRef: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+            slug: string;
+        };
         TopicSummary: {
             /** Format: int64 */
             id: number;
             slug: string;
             title: string;
             author: components["schemas"]["AuthorResponse"];
+            category: components["schemas"]["CategoryRef"];
             pinned: boolean;
             locked: boolean;
             /** Format: int32 */
@@ -504,11 +527,14 @@ export interface components {
             /** Format: email */
             email: string;
         };
-        CategoryRef: {
+        PageResponseTopicSummary: {
+            items: components["schemas"]["TopicSummary"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            totalPages: number;
             /** Format: int64 */
-            id: number;
-            name: string;
-            slug: string;
+            totalItems: number;
         };
         PageResponsePostResponse: {
             items: components["schemas"]["PostResponse"][];
@@ -554,14 +580,15 @@ export interface components {
             name?: string;
             version?: string;
         };
-        PageResponseTopicSummary: {
-            items: components["schemas"]["TopicSummary"][];
-            /** Format: int32 */
-            page: number;
-            /** Format: int32 */
-            totalPages: number;
+        ActiveUserResponse: {
+            user: components["schemas"]["AuthorResponse"];
             /** Format: int64 */
-            totalItems: number;
+            postCount: number;
+        };
+        HomeResponse: {
+            highlightedCategories: components["schemas"]["CategoryResponse"][];
+            latestTopics: components["schemas"]["TopicSummary"][];
+            activeUsers: components["schemas"]["ActiveUserResponse"][];
         };
         DeletePostResponse: {
             topicRemoved: boolean;
@@ -714,6 +741,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["UploadResponse"];
+                };
+            };
+        };
+    };
+    listAll: {
+        parameters: {
+            query?: {
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseTopicSummary"];
                 };
             };
         };
@@ -1046,6 +1095,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AppInfo"];
+                };
+            };
+        };
+    };
+    home: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["HomeResponse"];
                 };
             };
         };
