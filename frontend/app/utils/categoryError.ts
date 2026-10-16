@@ -29,5 +29,7 @@ export function categoryActionErrorMessage(problem: ApiProblem): string {
   if (fieldMessages.length) return fieldMessages.join(' ')
   if (problem.status === 403) return 'Your session expired. Reload the page and try again.'
   if (problem.status === 404) return 'This category no longer exists.'
+  // 409: the category still has topics; the backend says so in plain words.
+  if (problem.status === 409 && problem.detail) return problem.detail
   return 'Something went wrong. Please try again.'
 }
