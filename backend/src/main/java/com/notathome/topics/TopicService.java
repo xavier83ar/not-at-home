@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -106,6 +107,26 @@ public class TopicService {
                     this::summaries));
   }
 
+  /** Every category's topics together, most recently active first. */
+  @Transactional(readOnly = true)
+  PageResponse<TopicSummary> listAll(int page) {
+    return PageResponse.of(
+        topics.findByDeletedAtIsNullOrderByLastPostAtDescIdDesc(
+            PageResponse.request(page, Sort.unsorted())),
+        this::summaries);
+  }
+
+  /**
+   * The home page's latest topics (section 8.2): the most recently active, whatever the category.
+   */
+  @Transactional(readOnly = true)
+  public List<TopicSummary> latest(int limit) {
+    return summaries(
+        topics
+            .findByDeletedAtIsNullOrderByLastPostAtDescIdDesc(PageRequest.of(0, limit))
+            .getContent());
+  }
+
   /**
    * FR-4.3: a topic and one page of its posts. A removed topic answers with {@code removed: true}
    * and the five most recently active topics of its category (FR-5.7); only admins also get what
@@ -153,6 +174,14 @@ public class TopicService {
   private List<TopicSummary> summaries(List<Topic> found) {
     Map<Long, AuthorResponse> byAuthor =
         authors.byId(found.stream().map(Topic::getAuthorId).toList());
+    Map<Long, CategoryRef> byCategory = new HashMap<>();
+    categories
+        .findAllById(found.stream().map(Topic::getCategoryId).distinct().toList())
+        .forEach(
+            category ->
+                byCategory.put(
+                    category.getId(),
+                    new CategoryRef(category.getId(), category.getName(), category.getSlug())));
     Map<Long, Long> latestPost = new HashMap<>();
     posts
         .latestVisiblePosts(found.stream().map(Topic::getId).toList())
@@ -165,6 +194,7 @@ public class TopicService {
                     topic.getSlug(),
                     topic.getTitle(),
                     byAuthor.get(topic.getAuthorId()),
+                    byCategory.get(topic.getCategoryId()),
                     topic.isPinned(),
                     topic.isLocked(),
                     topic.getReplyCount(),

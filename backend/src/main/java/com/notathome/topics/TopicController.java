@@ -38,6 +38,12 @@ class TopicController {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
   }
 
+  /** Public: the topics of every category, most recently active first. */
+  @GetMapping("/api/topics")
+  PageResponse<TopicSummary> listAll(@RequestParam(defaultValue = "1") int page) {
+    return topics.listAll(page);
+  }
+
   /** FR-4.3: public. The viewer is only needed to know whether they are an admin (FR-5.8). */
   @GetMapping("/api/topics/{id}")
   TopicPageResponse get(

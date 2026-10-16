@@ -5,6 +5,8 @@ import com.notathome.topics.TopicRepository;
 import com.notathome.uploads.Upload;
 import com.notathome.uploads.UploadRepository;
 import com.notathome.uploads.UploadUrl;
+import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +36,25 @@ public class CategoryService {
   /** FR-2.2: every active category, in display order. */
   public List<CategoryResponse> list() {
     return withStats(categories.findAllByDeletedAtIsNullOrderByPositionAsc());
+  }
+
+  /**
+   * Section 8.2: the categories with the most posts since {@code since}, then, if fewer than {@code
+   * limit} have any, the rest by all-time posts.
+   */
+  public List<CategoryResponse> highlighted(int limit, Instant since) {
+    Map<Long, Long> recent = new HashMap<>();
+    posts
+        .countByCategorySince(since)
+        .forEach(count -> recent.put(count.categoryId(), count.posts()));
+    return list().stream()
+        .sorted(
+            Comparator.comparingLong(
+                    (CategoryResponse category) -> -recent.getOrDefault(category.id(), 0L))
+                .thenComparingLong(category -> -category.postCount())
+                .thenComparingInt(CategoryResponse::position))
+        .limit(limit)
+        .toList();
   }
 
   public Optional<CategoryResponse> getBySlug(String slug) {

@@ -34,6 +34,7 @@ Items marked **Post-MVP** are wanted but are built after the first release (see 
 ### 1.4 Post-MVP
 Planned for after the first release; everything else in this document works without them:
 - Log in or sign up with Google (FR-1.5), and everything that exists only because of it: the OAuth2 Client dependency, `google_id`, password-less accounts in the settings and account deletion flows, and the Google avatar.
+- A generated sitemap of categories and topics (section 4.3). It needs the final public domain, so it is added once hosting is chosen; everything else in SEO is in the first release.
 
 ---
 

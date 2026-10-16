@@ -46,6 +46,30 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " group by t.categoryId")
   List<CategoryPostCount> countByCategory(@Param("categoryIds") Collection<Long> categoryIds);
 
+  record CategoryRecentPostCount(Long categoryId, long posts) {}
+
+  /** Visible posts written since {@code since}, per category, for the home page's cards. */
+  @Query(
+      "select new com.notathome.posts.PostRepository$CategoryRecentPostCount(t.categoryId, count(p))"
+          + " from Post p join Topic t on p.topicId = t.id"
+          + " where t.deletedAt is null and p.deletedAt is null and p.createdAt >= :since"
+          + " group by t.categoryId")
+  List<CategoryRecentPostCount> countByCategorySince(@Param("since") Instant since);
+
+  record AuthorPostCount(Long authorId, long posts) {}
+
+  /**
+   * Who wrote the most visible posts since {@code since}, most first. Deleted and banned accounts
+   * are left out (section 8.2); ties go to the older account.
+   */
+  @Query(
+      "select new com.notathome.posts.PostRepository$AuthorPostCount(p.authorId, count(p))"
+          + " from Post p join Topic t on p.topicId = t.id join User u on p.authorId = u.id"
+          + " where t.deletedAt is null and p.deletedAt is null and p.createdAt >= :since"
+          + " and u.deletedAt is null and u.status = com.notathome.users.UserStatus.ACTIVE"
+          + " group by p.authorId order by count(p) desc, p.authorId asc")
+  List<AuthorPostCount> mostActiveAuthorsSince(@Param("since") Instant since, Pageable pageable);
+
   record LatestPost(Long topicId, Long postId) {}
 
   /** For each topic, its newest post that has not been removed (FR-7.2). */
