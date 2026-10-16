@@ -2,6 +2,7 @@ package com.notathome.categories;
 
 import com.notathome.common.FieldErrorsException;
 import com.notathome.common.Slug;
+import com.notathome.topics.TopicRepository;
 import com.notathome.uploads.UploadRepository;
 import java.time.Instant;
 import java.util.HashMap;
@@ -19,10 +20,13 @@ public class AdminCategoryService {
 
   private final CategoryRepository categories;
   private final UploadRepository uploads;
+  private final TopicRepository topics;
 
-  AdminCategoryService(CategoryRepository categories, UploadRepository uploads) {
+  AdminCategoryService(
+      CategoryRepository categories, UploadRepository uploads, TopicRepository topics) {
     this.categories = categories;
     this.uploads = uploads;
+    this.topics = topics;
   }
 
   /** For the seed command, which has no HTTP request to build a {@link CategoryRequest} from. */
@@ -77,14 +81,16 @@ public class AdminCategoryService {
     }
   }
 
-  /**
-   * Soft delete (FR-2.4). Refusing this while the category has active topics is M4 work: there is
-   * no {@code topics} table yet, so nothing to check.
-   */
+  /** Soft delete (FR-2.4): refused with a 409 while the category has active topics. */
   @Transactional
   void delete(Long id) {
     Category category =
         categories.findByIdAndDeletedAtIsNull(id).orElseThrow(AdminCategoryService::notFound);
+    if (topics.existsByCategoryIdAndDeletedAtIsNull(id)) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "This category still has topics. Delete them or move them to another category first.");
+    }
     category.softDelete(Instant.now());
     List<Category> remaining = categories.findAllByDeletedAtIsNullOrderByPositionAsc();
     for (int position = 0; position < remaining.size(); position++) {

@@ -92,6 +92,11 @@ public class Topic {
     return deletedAt != null;
   }
 
+  /** FR-5.5. Callers remove the topic's posts with it ({@code PostRepository.removeAllOfTopic}). */
+  public void remove(Instant at) {
+    this.deletedAt = at;
+  }
+
   /** Called by {@link TopicCounters}, the only place these two values are worked out. */
   void updateActivity(int replyCount, Instant lastPostAt) {
     this.replyCount = replyCount;

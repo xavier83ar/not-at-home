@@ -65,7 +65,7 @@ class TopicTests {
     mockMvc
         .perform(get("/api/topics/" + topicId))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.topic.category.slug").value("hiking"))
+        .andExpect(jsonPath("$.category.slug").value("hiking"))
         .andExpect(jsonPath("$.posts.items.length()").value(1))
         .andExpect(jsonPath("$.posts.items[0].opening").value(true))
         .andExpect(jsonPath("$.posts.items[0].removed").value(false))

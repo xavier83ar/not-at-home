@@ -3,7 +3,10 @@ package com.notathome.support;
 import static com.notathome.support.Accounts.PASSWORD;
 import static com.notathome.support.Accounts.login;
 import static com.notathome.support.Accounts.session;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.jayway.jsonpath.JsonPath;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
 import com.notathome.users.UserRole;
@@ -11,9 +14,12 @@ import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 
 /** Helpers for tests of topics and posts. */
 public final class Forum {
@@ -48,6 +54,52 @@ public final class Forum {
     }
     users.save(user);
     return session(login(mockMvc, username, PASSWORD, false));
+  }
+
+  /** A request with a JSON body, sent the way the browser does, with the CSRF token. */
+  public static ResultActions send(
+      MockMvc mockMvc, HttpMethod method, Cookie who, String url, String json) throws Exception {
+    return mockMvc.perform(
+        request(method, url)
+            .cookie(who)
+            .with(Csrf.token(mockMvc))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(json));
+  }
+
+  /** Creates a topic and returns its id. */
+  public static Long topic(MockMvc mockMvc, Cookie who, Long categoryId, String title)
+      throws Exception {
+    String body =
+        send(
+                mockMvc,
+                HttpMethod.POST,
+                who,
+                "/api/topics",
+                "{\"categoryId\":%d,\"title\":\"%s\",\"content\":%s}"
+                    .formatted(categoryId, title, document("Opening post")))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return ((Number) JsonPath.read(body, "$.id")).longValue();
+  }
+
+  /** Replies to a topic and returns the new post's id. */
+  public static Long reply(MockMvc mockMvc, Cookie who, Long topicId, String text)
+      throws Exception {
+    String body =
+        send(
+                mockMvc,
+                HttpMethod.POST,
+                who,
+                "/api/topics/" + topicId + "/posts",
+                "{\"content\":" + document(text) + "}")
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return ((Number) JsonPath.read(body, "$.id")).longValue();
   }
 
   /** An Editor.js document with one paragraph per argument. */

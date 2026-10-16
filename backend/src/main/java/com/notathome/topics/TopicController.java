@@ -3,6 +3,7 @@ package com.notathome.topics;
 import com.notathome.auth.AuthUser;
 import com.notathome.auth.RequiresVerifiedEmail;
 import com.notathome.common.PageResponse;
+import com.notathome.posts.PostContentRequest;
 import com.notathome.posts.PostResponse;
 import com.notathome.ratelimit.RateLimitPolicy;
 import com.notathome.ratelimit.RateLimited;
@@ -61,7 +62,7 @@ class TopicController {
   @ResponseStatus(HttpStatus.CREATED)
   PostResponse reply(
       @PathVariable Long id,
-      @Valid @RequestBody ReplyRequest request,
+      @Valid @RequestBody PostContentRequest request,
       @AuthenticationPrincipal AuthUser author) {
     return topics.reply(id, author.getId(), request.content());
   }

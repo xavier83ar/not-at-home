@@ -11,7 +11,6 @@ public record TopicDetail(
     @Schema(requiredMode = REQUIRED) Long id,
     @Schema(requiredMode = REQUIRED) String slug,
     @Schema(requiredMode = REQUIRED) String title,
-    @Schema(requiredMode = REQUIRED) CategoryRef category,
     @Schema(requiredMode = REQUIRED) AuthorResponse author,
     @Schema(requiredMode = REQUIRED) boolean pinned,
     @Schema(requiredMode = REQUIRED) boolean locked,
