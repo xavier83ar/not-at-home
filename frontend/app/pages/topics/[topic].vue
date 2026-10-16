@@ -3,6 +3,7 @@ import type { components } from '~/types/api'
 import ReplyForm from '~/components/ReplyForm.vue'
 
 type TopicPage = components['schemas']['TopicPageResponse']
+type CategoryResponse = components['schemas']['CategoryResponse']
 type PostResponse = components['schemas']['PostResponse']
 type PostLocation = components['schemas']['PostLocation']
 type DeletePostResponse = components['schemas']['DeletePostResponse']
@@ -43,9 +44,37 @@ if (data.value?.removed && import.meta.server) {
   setResponseStatus(useRequestEvent()!, 410)
 }
 
-useSeoMeta({
-  title: () => (data.value?.removed && !topic.value ? 'Topic removed' : topic.value?.title),
-  robots: () => (data.value?.removed ? 'noindex' : undefined),
+// The category's cover is the link preview image. Optional, so a failure here is ignored.
+const { data: category } = data.value?.removed
+  ? { data: ref(null) }
+  : await useAsyncData(`topic-category-${data.value?.category.slug}`, () =>
+      $api<CategoryResponse>(`/api/categories/${data.value?.category.slug}`).catch(() => null),
+    )
+
+useSeoMeta({ robots: () => (data.value?.removed ? 'noindex' : undefined) })
+useSeo(() => {
+  const title = topic.value?.title
+  const opening = data.value?.posts?.items.find((post) => post.opening && !post.removed)
+  return {
+    title: data.value?.removed && !topic.value ? 'Topic removed' : title,
+    description: opening
+      ? excerpt(opening.content) || undefined
+      : title
+        ? `Page ${page.value} of the discussion “${title}”.`
+        : undefined,
+    path: topic.value
+      ? topicPath(topic.value.id, topic.value.slug)
+      : topicPath(param.id, param.slug),
+    page: page.value,
+    image: category.value?.coverImageUrl,
+    type: 'article',
+    breadcrumbs: [
+      { name: data.value?.category.name ?? '', path: `/categories/${data.value?.category.slug}` },
+      ...(topic.value
+        ? [{ name: topic.value.title, path: topicPath(topic.value.id, topic.value.slug) }]
+        : []),
+    ],
+  }
 })
 
 const locked = computed(() => topic.value?.locked === true)

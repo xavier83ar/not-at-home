@@ -17,10 +17,13 @@ if (error.value && parseProblem(error.value).status === 404) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
-useSeoMeta({
-  title: 'All topics',
+useSeo(() => ({
+  title: page.value > 1 ? `All topics (page ${page.value})` : 'All topics',
   description: 'The latest discussions in every category of Not at Home.',
-})
+  path: '/topics',
+  page: page.value,
+  breadcrumbs: [{ name: 'All topics', path: '/topics' }],
+}))
 </script>
 
 <template>

@@ -36,6 +36,11 @@ export default defineNuxtConfig({
     // proxy in front of this server sets X-Forwarded-For itself and nothing else can reach this
     // server directly. See shared/utils/forwarded.ts.
     trustForwardedFor: false,
+    public: {
+      // Public address of the site, no trailing slash: canonical links and link previews point
+      // here. Override at runtime with NUXT_PUBLIC_SITE_URL.
+      siteUrl: 'http://localhost:3000',
+    },
   },
 
   app: {
