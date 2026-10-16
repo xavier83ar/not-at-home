@@ -1,2 +1,14 @@
-User-Agent: *
-Disallow:
+User-agent: *
+# Not for search results: the API, account pages and the admin area. (Pages that are only
+# reachable with a login or a token also say `noindex` themselves.)
+Disallow: /api/
+Disallow: /admin/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /topics/new
+Disallow: /posts/
+# ...except uploaded images, which category covers and link previews load from there.
+Allow: /api/uploads/

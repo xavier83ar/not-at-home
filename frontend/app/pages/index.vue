@@ -9,7 +9,12 @@ const { data: home, error } = await useAsyncData('home', () => $api<HomeResponse
 
 const isAdmin = computed(() => user.value?.role === 'ADMIN')
 
-useSeoMeta({ title: 'Home' })
+useSeo({
+  title: 'Stories from the trail',
+  description:
+    'Not at Home is a forum for outdoor enthusiasts: share trips, ask questions and talk gear.',
+  path: '/',
+})
 </script>
 
 <template>

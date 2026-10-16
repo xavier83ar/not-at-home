@@ -8,9 +8,11 @@ const { data: categories, error } = await useAsyncData('categories', () =>
   $api<CategoryResponse[]>('/api/categories'),
 )
 
-useSeoMeta({
+useSeo({
   title: 'Categories',
   description: 'Browse every category on Not at Home.',
+  path: '/categories',
+  breadcrumbs: [{ name: 'Categories', path: '/categories' }],
 })
 </script>
 

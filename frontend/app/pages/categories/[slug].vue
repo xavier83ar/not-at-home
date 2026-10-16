@@ -36,10 +36,21 @@ if (error.value && parseProblem(error.value).status === 404) {
   throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true })
 }
 
-useSeoMeta({
-  title: () => (category.value ? category.value.name : 'Category'),
-  description: () => category.value?.description,
-})
+useSeo(() => ({
+  title: category.value
+    ? page.value > 1
+      ? `${category.value.name} (page ${page.value})`
+      : category.value.name
+    : 'Category',
+  description: category.value?.description,
+  path: `/categories/${slug}`,
+  page: page.value,
+  image: category.value?.coverImageUrl,
+  breadcrumbs: [
+    { name: 'Categories', path: '/categories' },
+    { name: category.value?.name ?? slug, path: `/categories/${slug}` },
+  ],
+}))
 </script>
 
 <template>

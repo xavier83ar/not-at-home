@@ -111,6 +111,12 @@ Posts are written with Editor.js and stored as JSON (`posts.content`), plus thei
 - Deleting is soft. A removed post stays in the topic as "This post was removed" (admins can still read it), a topic whose opening post is deleted while it has no replies is removed entirely, and a removed topic answers with a 410 page listing the category's recent topics. Counters (`reply_count`, last activity, category totals) are recounted in the same transaction as the change, never adjusted by one.
 - Editing and deleting are limited to the author for now; admin editing and deleting, locking, pinning and moving topics come with the admin panel (M8).
 
+## SEO
+
+Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area and post permalinks are `noindex` and listed in `robots.txt`.
+
+Canonical links and previews need an absolute address: set `NUXT_PUBLIC_SITE_URL` (read at runtime, default `http://localhost:3000`) to the public domain in production. There is no sitemap yet; it is planned for after the first release, once the public domain is known.
+
 ## Rate limits
 
 Requests that can be abused are limited (NFR-2). Over a limit the answer is `429` with a `Retry-After` header and, in the body, `code: RATE_LIMITED` and `retryAfterSeconds`; the forms show how long to wait. Limits refill continuously (5 per hour is one every 12 minutes) and live in memory, which is enough for one backend instance.
