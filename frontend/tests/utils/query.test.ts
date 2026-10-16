@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { firstQueryValue } from '~/utils/query'
+import { firstQueryValue, parsePage } from '~/utils/query'
 
 describe('firstQueryValue', () => {
   it('returns a plain value', () => {
@@ -21,5 +21,18 @@ describe('firstQueryValue', () => {
   it('ignores anything that is not text', () => {
     expect(firstQueryValue(42)).toBeUndefined()
     expect(firstQueryValue({})).toBeUndefined()
+  })
+})
+
+describe('parsePage', () => {
+  it('reads a page number', () => {
+    expect(parsePage('3')).toBe(3)
+    expect(parsePage(['2', '5'])).toBe(2)
+  })
+
+  it('falls back to the first page for anything else', () => {
+    for (const value of [undefined, '', '0', '-2', '1.5', 'abc', '2abc', '9999999', {}]) {
+      expect(parsePage(value), String(value)).toBe(value === '9999999' ? 1 : 1)
+    }
   })
 })

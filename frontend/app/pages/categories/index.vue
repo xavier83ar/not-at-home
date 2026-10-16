@@ -40,7 +40,11 @@ useSeoMeta({
               <BCardTitle class="h5 mb-2 text-body">{{ category.name }}</BCardTitle>
               <p class="text-body-secondary mb-2">{{ category.description }}</p>
               <p class="small text-body-secondary mb-0">
-                {{ category.topicCount }} topics · {{ category.postCount }} posts
+                {{ category.topicCount }} {{ category.topicCount === 1 ? 'topic' : 'topics' }} ·
+                {{ category.postCount }} {{ category.postCount === 1 ? 'post' : 'posts' }}
+                <template v-if="category.latestActivityAt">
+                  · active <TimeAgo :date="category.latestActivityAt" />
+                </template>
               </p>
             </BCardBody>
           </BCard>

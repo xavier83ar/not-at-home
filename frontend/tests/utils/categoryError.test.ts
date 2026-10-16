@@ -63,3 +63,13 @@ describe('categoryActionErrorMessage', () => {
     )
   })
 })
+
+describe('categoryActionErrorMessage for a category that still has topics', () => {
+  it('shows the backend explanation on 409', () => {
+    expect(
+      categoryActionErrorMessage(
+        problem({ status: 409, detail: 'This category still has topics. Delete them first.' }),
+      ),
+    ).toBe('This category still has topics. Delete them first.')
+  })
+})
