@@ -229,7 +229,8 @@ Goal: admins can keep the forum clean (FR-9, FR-10).
 - [ ] Migration: `reports`.
 - [ ] Report a post with a reason (FR-9.1); one open report per user per post.
 - [ ] Admin reports queue: open reports with the post (including removed content), dismiss or resolve by editing or deleting the post, or banning the author (FR-9.2).
-- [ ] Topic moderation: lock / unlock, pin / unpin, move to another category (FR-3.4, FR-3.5), from the topic page.
+- [ ] Admin edit and delete of any post or topic (FR-5.4): the same endpoints as for own posts (`PUT`/`DELETE /api/posts/{id}`), allowed for the author or an admin, plus deleting a whole topic, which removes all its posts; counters recomputed as usual. M4 only covers an author's own posts.
+- [ ] Topic moderation: lock / unlock, pin / unpin, move to another category (FR-3.4, FR-3.5), from the topic page. Moving a topic updates both categories' counts.
 - [ ] Users admin: search and list users; ban and unban (FR-9.3), which ends the user's sessions and remember-me tokens immediately (section 4.5); promote and demote with the "at least one admin" guard (FR-9.4).
 - [ ] Stats: number of users, topics and posts (FR-10.2).
 - [ ] Admin panel layout and navigation (FR-10.1), visible only to admins and protected on the server.
