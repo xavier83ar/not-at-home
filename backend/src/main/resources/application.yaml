@@ -39,6 +39,15 @@ app:
     # Local disk directory for uploaded files; relative to where the backend runs in dev (gitignored).
     # Production must point this at a persisted volume (APP_UPLOADS_DIR).
     dir: ${APP_UPLOADS_DIR:uploads}
+  seed:
+    # Only read with the `seed` profile active (see README, "Seed data"); blank the rest of the
+    # time, which is fine, since nothing reads these unless that profile is on.
+    admin-username: ${SEED_ADMIN_USERNAME:}
+    admin-email: ${SEED_ADMIN_EMAIL:}
+    admin-password: ${SEED_ADMIN_PASSWORD:}
+    user-username: ${SEED_USER_USERNAME:}
+    user-email: ${SEED_USER_EMAIL:}
+    user-password: ${SEED_USER_PASSWORD:}
 
 server:
   # Behind the frontend's proxy the backend sees the frontend's address, not the visitor's.
