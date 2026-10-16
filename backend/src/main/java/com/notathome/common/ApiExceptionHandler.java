@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -48,6 +49,22 @@ class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         new HttpHeaders(),
         HttpStatus.BAD_REQUEST,
         request);
+  }
+
+  /**
+   * Thrown by the servlet container before the upload endpoint's own (lower) size check runs, for a
+   * request so large it isn't worth reading at all. Rendered the same way as that check's error.
+   */
+  @Override
+  protected ResponseEntity<Object> handleMaxUploadSizeExceededException(
+      MaxUploadSizeExceededException ex,
+      HttpHeaders headers,
+      HttpStatusCode status,
+      WebRequest request) {
+    ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+    Map<String, List<String>> errors = Map.of("file", List.of("must be 5 MB or smaller"));
+    return handleExceptionInternal(
+        ex, validationProblem(problem, errors), headers, HttpStatus.BAD_REQUEST, request);
   }
 
   private static ProblemDetail validationProblem(

@@ -20,6 +20,12 @@ spring:
     jdbc:
       # Tables are created by Flyway (see db/migration).
       initialize-schema: never
+  servlet:
+    multipart:
+      # Above the 5 MB the upload endpoint itself enforces, so that limit (with its field error)
+      # is what a slightly-over-sized upload hits, not this one.
+      max-file-size: 8MB
+      max-request-size: 8MB
 
 app:
   rate-limit:
@@ -29,6 +35,10 @@ app:
   frontend-url: http://localhost:3000
   mail:
     from: noreply@notathome.local
+  uploads:
+    # Local disk directory for uploaded files; relative to where the backend runs in dev (gitignored).
+    # Production must point this at a persisted volume (APP_UPLOADS_DIR).
+    dir: ${APP_UPLOADS_DIR:uploads}
 
 server:
   # Behind the frontend's proxy the backend sees the frontend's address, not the visitor's.
