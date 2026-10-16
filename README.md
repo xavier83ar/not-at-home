@@ -90,7 +90,7 @@ For backend code, mark endpoints that need a verified email with `@RequiresVerif
 
 ## Seed data
 
-A fresh database can be seeded with one command (FR-10.3): a default admin, a default user (both already verified, so they can post right away) and five categories (Hiking, Climbing, Camping, Gear, Trip Reports) with cover images. It refuses to run if the database already has any users (FR-10.4), so it's safe to run on every deploy, not just the first.
+A fresh database can be seeded with one command (FR-10.3): a default admin, a default user (both already verified, so they can post right away), five categories (Hiking, Climbing, Camping, Gear, Trip Reports) with cover images, and three demo topics (a couple of them with a reply from the other account). It refuses to run if the database already has any users (FR-10.4), so it's safe to run on every deploy, not just the first.
 
 Credentials come from environment variables, never hard-coded:
 
@@ -101,7 +101,15 @@ SEED_USER_USERNAME=rider SEED_USER_EMAIL=rider@example.com SEED_USER_PASSWORD='c
 ./mvnw spring-boot:run
 ```
 
-(in `backend/`; in production, add `seed` to `SPRING_PROFILES_ACTIVE` instead). The `seed` profile is a one-off install step, not a server: it seeds (or logs why it can't, and exits with a non-zero status) and then exits, rather than going on to serve requests. Demo topics are added once M4 brings topics.
+(in `backend/`; in production, add `seed` to `SPRING_PROFILES_ACTIVE` instead). The `seed` profile is a one-off install step, not a server: it seeds (or logs why it can't, and exits with a non-zero status) and then exits, rather than going on to serve requests.
+
+## Topics and posts
+
+Posts are written with Editor.js and stored as JSON (`posts.content`), plus their plain text (`posts.search_text`, for search in M6). The backend never stores what the browser sends as it is: `EditorContentProcessor` rebuilds the document from the allowed blocks only (paragraph, header, list, quote, code, delimiter, image, link), sanitizes inline HTML (bold, italic, underline, code, mark, and links to this site, http(s) or mailto), and only accepts image blocks that point at one of our own uploads. The frontend sanitizes again when rendering, and renders on the server, so topics read fine without JavaScript. The "link" block is a plain link; there is no preview card, because that would need the server to fetch addresses chosen by users.
+
+- Topic URLs are `/topics/<id>-<slug>` (the id is what is looked up; a wrong slug is redirected) and every post has a permanent link, `/posts/<id>`, that redirects to the right page of its topic and scrolls to the post.
+- Deleting is soft. A removed post stays in the topic as "This post was removed" (admins can still read it), a topic whose opening post is deleted while it has no replies is removed entirely, and a removed topic answers with a 410 page listing the category's recent topics. Counters (`reply_count`, last activity, category totals) are recounted in the same transaction as the change, never adjusted by one.
+- Editing and deleting are limited to the author for now; admin editing and deleting, locking, pinning and moving topics come with the admin panel (M8).
 
 ## Rate limits
 

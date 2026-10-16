@@ -3,9 +3,11 @@ package com.notathome.seed;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.notathome.categories.CategoryRepository;
+import com.notathome.support.Forum;
 import com.notathome.support.IntegrationTest;
 import com.notathome.uploads.UploadRepository;
 import com.notathome.users.UserRepository;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,11 +24,10 @@ class SeedDataServiceValidationTests {
   @Autowired JdbcTemplate jdbc;
 
   @BeforeEach
+  @AfterEach
   void cleanUp() {
-    jdbc.update("delete from categories");
-    jdbc.update("delete from uploads");
-    jdbc.update("delete from spring_session");
-    jdbc.update("delete from users");
+    // Seeded topics reference users and categories, so everything goes in one statement.
+    Forum.reset(jdbc);
   }
 
   @Test
