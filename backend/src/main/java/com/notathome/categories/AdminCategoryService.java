@@ -1,6 +1,7 @@
 package com.notathome.categories;
 
 import com.notathome.common.FieldErrorsException;
+import com.notathome.common.Slug;
 import com.notathome.uploads.UploadRepository;
 import java.time.Instant;
 import java.util.HashMap;
@@ -98,7 +99,7 @@ public class AdminCategoryService {
   }
 
   private String uniqueSlug(String name) {
-    String base = Slug.of(name);
+    String base = Slug.of(name, "category");
     String candidate = base;
     int suffix = 2;
     while (categories.existsBySlugAndDeletedAtIsNull(candidate)) {
