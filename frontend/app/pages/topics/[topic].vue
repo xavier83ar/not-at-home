@@ -86,6 +86,12 @@ async function onDeleted(result: DeletePostResponse) {
 
 <template>
   <section v-if="data">
+    <BreadcrumbNav
+      :crumbs="[
+        { label: data.category.name, to: `/categories/${data.category.slug}` },
+        { label: topic ? topic.title : 'Removed topic' },
+      ]"
+    />
     <div v-if="data.removed" class="mb-4" data-testid="removed-topic">
       <h1 class="h3">This topic has been removed</h1>
       <p class="text-body-secondary">
@@ -108,9 +114,6 @@ async function onDeleted(result: DeletePostResponse) {
       </BAlert>
 
       <header class="mb-4">
-        <p class="small mb-1">
-          <NuxtLink :to="`/categories/${data.category.slug}`">{{ data.category.name }}</NuxtLink>
-        </p>
         <h1 class="h3 mb-1">
           <i v-if="topic.pinned" class="bi bi-pin-angle-fill me-1" title="Pinned" />
           <i v-if="topic.locked" class="bi bi-lock-fill me-1" title="Locked" />

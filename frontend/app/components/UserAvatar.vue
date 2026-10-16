@@ -40,7 +40,8 @@ const dimension = computed(() => `${props.size}px`)
   background-color: var(--bs-primary);
   color: var(--bs-white, #fff);
   font-weight: 600;
-  font-size: 0.9rem;
+  /* 14.4px at the default 40px, and it shrinks with the circle. */
+  font-size: calc(v-bind(dimension) * 0.36);
 }
 
 [data-bs-theme='dark'] .avatar-initials {

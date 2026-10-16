@@ -44,6 +44,9 @@ useSeoMeta({
 
 <template>
   <section v-if="category">
+    <BreadcrumbNav
+      :crumbs="[{ label: 'Categories', to: '/categories' }, { label: category.name }]"
+    />
     <header class="mb-4 d-flex flex-wrap justify-content-between align-items-start gap-3">
       <div>
         <h1 class="h3 mb-1">{{ category.name }}</h1>

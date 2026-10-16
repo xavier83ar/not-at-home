@@ -16,6 +16,7 @@ useSeoMeta({
 
 <template>
   <section>
+    <BreadcrumbNav :crumbs="[{ label: 'Categories' }]" />
     <h1 class="h3 mb-4">Categories</h1>
 
     <BAlert v-if="error" :model-value="true" variant="warning">
