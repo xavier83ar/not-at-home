@@ -395,12 +395,20 @@ export interface components {
             /** Format: int64 */
             size: number;
         };
+        EditorBlock: {
+            type: string;
+            data: {
+                [key: string]: unknown;
+            };
+        };
         CreateTopicRequest: {
             /** Format: int64 */
             categoryId: number;
             title: string;
-            /** @description Editor.js document: {blocks: [{type, data}]} */
-            content: string;
+            content: components["schemas"]["EditorDocument"];
+        };
+        EditorDocument: {
+            blocks: components["schemas"]["EditorBlock"][];
         };
         AuthorResponse: {
             /** Format: int64 */
@@ -429,8 +437,7 @@ export interface components {
             lastPostId: number;
         };
         ReplyRequest: {
-            /** @description Editor.js document: {blocks: [{type, data}]} */
-            content: string;
+            content: components["schemas"]["EditorDocument"];
         };
         PostResponse: {
             /** Format: int64 */
@@ -438,8 +445,7 @@ export interface components {
             /** Format: int64 */
             topicId: number;
             author: components["schemas"]["AuthorResponse"];
-            /** @description Editor.js document: {blocks: [{type, data}]} */
-            content?: string | null;
+            content?: components["schemas"]["EditorDocument"];
             removed: boolean;
             /** @description Whether this is the topic's opening post */
             opening: boolean;

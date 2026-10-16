@@ -1,5 +1,6 @@
 package com.notathome.topics;
 
+import com.notathome.content.EditorDocumentSchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,5 +11,4 @@ import tools.jackson.databind.JsonNode;
 record CreateTopicRequest(
     @NotNull Long categoryId,
     @NotBlank @Size(max = 128, message = "must be at most 128 characters") String title,
-    @NotNull @Schema(type = "object", description = "Editor.js document: {blocks: [{type, data}]}")
-        JsonNode content) {}
+    @NotNull @Schema(implementation = EditorDocumentSchema.class) JsonNode content) {}
