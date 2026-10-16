@@ -1,0 +1,107 @@
+package com.notathome.categories;
+
+import com.notathome.common.FieldErrorsException;
+import com.notathome.uploads.UploadRepository;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+@Service
+class AdminCategoryService {
+
+  private final CategoryRepository categories;
+  private final UploadRepository uploads;
+
+  AdminCategoryService(CategoryRepository categories, UploadRepository uploads) {
+    this.categories = categories;
+    this.uploads = uploads;
+  }
+
+  @Transactional
+  Category create(CategoryRequest request) {
+    validateCoverUpload(request.coverUploadId());
+    String slug = uniqueSlug(request.name());
+    int position = (int) categories.countByDeletedAtIsNull();
+    return categories.save(
+        new Category(
+            request.name().strip(),
+            slug,
+            request.description().strip(),
+            request.coverUploadId(),
+            position));
+  }
+
+  @Transactional
+  Category update(Long id, CategoryRequest request) {
+    Category category =
+        categories.findByIdAndDeletedAtIsNull(id).orElseThrow(AdminCategoryService::notFound);
+    validateCoverUpload(request.coverUploadId());
+    category.rename(request.name().strip());
+    category.changeDescription(request.description().strip());
+    category.changeCover(request.coverUploadId());
+    return category;
+  }
+
+  /** The full ordered list of every active category's id; arrow-button reordering, not drag. */
+  @Transactional
+  void reorder(List<Long> orderedIds) {
+    List<Category> current = categories.findAllByDeletedAtIsNullOrderByPositionAsc();
+    Set<Long> currentIds = new HashSet<>();
+    for (Category category : current) {
+      currentIds.add(category.getId());
+    }
+    if (orderedIds.size() != currentIds.size() || !currentIds.containsAll(orderedIds)) {
+      throw new FieldErrorsException(
+          Map.of("orderedIds", List.of("must list every active category exactly once")));
+    }
+    Map<Long, Category> byId = new HashMap<>();
+    for (Category category : current) {
+      byId.put(category.getId(), category);
+    }
+    for (int position = 0; position < orderedIds.size(); position++) {
+      byId.get(orderedIds.get(position)).reorderTo(position);
+    }
+  }
+
+  /**
+   * Soft delete (FR-2.4). Refusing this while the category has active topics is M4 work: there is
+   * no {@code topics} table yet, so nothing to check.
+   */
+  @Transactional
+  void delete(Long id) {
+    Category category =
+        categories.findByIdAndDeletedAtIsNull(id).orElseThrow(AdminCategoryService::notFound);
+    category.softDelete(Instant.now());
+    List<Category> remaining = categories.findAllByDeletedAtIsNullOrderByPositionAsc();
+    for (int position = 0; position < remaining.size(); position++) {
+      remaining.get(position).reorderTo(position);
+    }
+  }
+
+  private void validateCoverUpload(Long coverUploadId) {
+    if (coverUploadId != null && !uploads.existsById(coverUploadId)) {
+      throw new FieldErrorsException(Map.of("coverUploadId", List.of("upload not found")));
+    }
+  }
+
+  private String uniqueSlug(String name) {
+    String base = Slug.of(name);
+    String candidate = base;
+    int suffix = 2;
+    while (categories.existsBySlugAndDeletedAtIsNull(candidate)) {
+      candidate = base + "-" + suffix++;
+    }
+    return candidate;
+  }
+
+  private static ResponseStatusException notFound() {
+    return new ResponseStatusException(HttpStatus.NOT_FOUND);
+  }
+}
