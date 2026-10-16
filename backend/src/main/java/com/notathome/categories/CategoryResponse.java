@@ -16,6 +16,8 @@ public record CategoryResponse(
     @Schema(requiredMode = REQUIRED) String slug,
     @Schema(requiredMode = REQUIRED) String description,
     @Schema(requiredMode = NOT_REQUIRED, nullable = true) String coverImageUrl,
+    // So editing a category can resubmit the same cover without re-uploading it; not sensitive.
+    @Schema(requiredMode = NOT_REQUIRED, nullable = true) Long coverUploadId,
     @Schema(requiredMode = REQUIRED) int position,
     @Schema(requiredMode = REQUIRED) long topicCount,
     @Schema(requiredMode = REQUIRED) long postCount,
@@ -29,6 +31,7 @@ public record CategoryResponse(
         category.getSlug(),
         category.getDescription(),
         coverImageUrl,
+        category.getCoverUploadId(),
         category.getPosition(),
         0,
         0,

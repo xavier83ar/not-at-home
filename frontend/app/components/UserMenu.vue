@@ -22,6 +22,10 @@ async function onLogout() {
     <BDropdownText class="small text-body-secondary"
       >Signed in as @{{ user.username }}</BDropdownText
     >
+    <template v-if="user.role === 'ADMIN'">
+      <BDropdownDivider />
+      <BDropdownItem to="/admin/categories">Manage categories</BDropdownItem>
+    </template>
     <BDropdownDivider />
     <BDropdownItem @click="onLogout">Log out</BDropdownItem>
   </BDropdown>
