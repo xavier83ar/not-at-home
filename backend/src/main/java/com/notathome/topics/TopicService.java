@@ -57,26 +57,32 @@ public class TopicService {
   /** FR-3.1: the topic and its opening post are saved together or not at all. */
   @Transactional
   TopicSummary create(Long authorId, CreateTopicRequest request) {
+    return create(authorId, request.categoryId(), request.title(), request.content());
+  }
+
+  /** For the seed command, which has no HTTP request to build a {@link CreateTopicRequest} from. */
+  @Transactional
+  public TopicSummary create(Long authorId, Long categoryId, String rawTitle, JsonNode document) {
     Category category =
         categories
-            .findByIdAndDeletedAtIsNull(request.categoryId())
+            .findByIdAndDeletedAtIsNull(categoryId)
             .orElseThrow(
                 () ->
                     new FieldErrorsException(Map.of("categoryId", List.of("category not found"))));
-    ProcessedContent content = contentProcessor.process(request.content());
+    ProcessedContent content = contentProcessor.process(document);
 
-    String title = request.title().strip();
+    String title = rawTitle.strip();
     Instant now = Instant.now();
     Topic topic =
         topics.save(new Topic(category.getId(), authorId, title, Slug.of(title, "topic"), now));
-    Post opening = posts.save(new Post(topic.getId(), authorId, content, now));
+    posts.save(new Post(topic.getId(), authorId, content, now));
     counters.refresh(topic);
     return summaries(List.of(topic)).getFirst();
   }
 
   /** FR-4.1. Refused on a locked topic, whoever asks (FR-3.4). */
   @Transactional
-  PostResponse reply(Long topicId, Long authorId, JsonNode document) {
+  public PostResponse reply(Long topicId, Long authorId, JsonNode document) {
     Topic topic = topics.findActiveForUpdate(topicId).orElseThrow(TopicService::notFound);
     if (topic.isLocked()) {
       throw new TopicLockedException();

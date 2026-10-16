@@ -12,7 +12,11 @@ public final class Slug {
 
   /** {@code fallback} is used when nothing usable is left (e.g. a title made of emoji). */
   public static String of(String text, String fallback) {
-    String ascii = Normalizer.normalize(text, Normalizer.Form.NFKD).replaceAll("\\p{M}", "");
+    // Apostrophes vanish instead of splitting the word: "What's" is "whats", not "what-s".
+    String ascii =
+        Normalizer.normalize(text, Normalizer.Form.NFKD)
+            .replaceAll("\\p{M}", "")
+            .replaceAll("['\u2019]", "");
     String slug =
         ascii.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
     if (slug.length() > MAX_LENGTH) {

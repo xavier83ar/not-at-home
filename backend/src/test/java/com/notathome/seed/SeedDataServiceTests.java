@@ -1,15 +1,19 @@
 package com.notathome.seed;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import com.notathome.categories.Category;
 import com.notathome.categories.CategoryRepository;
+import com.notathome.support.Forum;
 import com.notathome.support.SeedIntegrationTest;
 import com.notathome.uploads.UploadRepository;
 import com.notathome.users.User;
 import com.notathome.users.UserRepository;
 import com.notathome.users.UserRole;
 import java.util.List;
+import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,11 +29,10 @@ class SeedDataServiceTests {
   @Autowired JdbcTemplate jdbc;
 
   @BeforeEach
+  @AfterEach
   void cleanUp() {
-    jdbc.update("delete from categories");
-    jdbc.update("delete from uploads");
-    jdbc.update("delete from spring_session");
-    jdbc.update("delete from users");
+    // Seeded topics reference users and categories, so everything goes in one statement.
+    Forum.reset(jdbc);
   }
 
   @Test
@@ -56,6 +59,32 @@ class SeedDataServiceTests {
     assertThat(createdCategories).allSatisfy(c -> assertThat(c.getCoverUploadId()).isNotNull());
 
     assertThat(uploads.count()).isEqualTo(5);
+  }
+
+  @Test
+  void seedsThreeDemoTopicsThatReadLikeRealOnes() {
+    seedDataService.seed();
+
+    List<Map<String, Object>> topics =
+        jdbc.queryForList(
+            "select t.title, c.name as category, u.username as author, t.reply_count"
+                + " from topics t join categories c on c.id = t.category_id"
+                + " join users u on u.id = t.author_id order by t.id");
+    assertThat(topics)
+        .extracting(t -> t.get("title"), t -> t.get("category"), t -> t.get("author"))
+        .containsExactly(
+            tuple("Best trails in Patagonia", "Hiking", "demo"),
+            tuple("What's in your pack for a three-day trek?", "Gear", "admin"),
+            tuple("Three days around Fitz Roy", "Trip Reports", "demo"));
+    assertThat(topics).extracting(t -> t.get("reply_count")).containsExactly(1, 0, 1);
+    assertThat(jdbc.queryForObject("select count(*) from posts", Long.class)).isEqualTo(5);
+    assertThat(
+            jdbc.queryForObject(
+                "select count(*) from posts where deleted_at is not null", Long.class))
+        .isZero();
+    assertThat(
+            jdbc.queryForObject("select search_text from posts order by id limit 1", String.class))
+        .contains("two weeks in Patagonia");
   }
 
   @Test

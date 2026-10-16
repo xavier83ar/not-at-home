@@ -30,6 +30,8 @@ describe('relativeTime', () => {
 describe('absoluteDateUtc', () => {
   it('is the same wherever it is rendered', () => {
     expect(absoluteDateUtc('2026-10-16T15:30:00Z')).toBe('Oct 16, 2026, 3:30 PM UTC')
+    expect(absoluteDateUtc('2026-01-05T00:05:00Z')).toBe('Jan 5, 2026, 12:05 AM UTC')
+    expect(absoluteDateUtc('2026-12-31T12:00:00Z')).toBe('Dec 31, 2026, 12:00 PM UTC')
   })
 })
 

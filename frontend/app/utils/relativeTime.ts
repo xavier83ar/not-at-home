@@ -1,3 +1,5 @@
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ['year', 365 * 24 * 3600],
   ['month', 30 * 24 * 3600],
@@ -24,13 +26,14 @@ export function relativeTime(date: Date | string, now: Date = new Date()): strin
  * client render matches it. The browser then swaps in the visitor's own time zone.
  */
 export function absoluteDateUtc(date: Date | string): string {
-  return (
-    new Intl.DateTimeFormat('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'UTC',
-    }).format(new Date(date)) + ' UTC'
-  )
+  const d = new Date(date)
+  const month = MONTHS[d.getUTCMonth()]
+  const hours = d.getUTCHours() % 12 || 12
+  const minutes = String(d.getUTCMinutes()).padStart(2, '0')
+  const period = d.getUTCHours() < 12 ? 'AM' : 'PM'
+  // Built by hand, not with Intl: its output differs between engines in small ways (the space
+  // before "PM" is a narrow no-break one in some), and the server and browser must agree.
+  return `${month} ${d.getUTCDate()}, ${d.getUTCFullYear()}, ${hours}:${minutes} ${period} UTC`
 }
 
 /** The full date in the visitor's time zone, for the tooltip (NFR-7). */

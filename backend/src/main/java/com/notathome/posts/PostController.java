@@ -7,6 +7,7 @@ import com.notathome.ratelimit.RateLimitPolicy;
 import com.notathome.ratelimit.RateLimited;
 import com.notathome.topics.Topic;
 import com.notathome.topics.TopicRepository;
+import com.notathome.users.UserRole;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -54,13 +55,17 @@ class PostController {
    * stay as placeholders), so a post's page never changes when others are deleted.
    */
   @GetMapping("/api/posts/{id}/location")
-  PostLocation location(@PathVariable Long id) {
+  PostLocation location(@PathVariable Long id, @AuthenticationPrincipal AuthUser viewer) {
     Post post =
         posts.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     // The topic may be removed too: its page is where the "removed" notice is shown (FR-5.7).
     Topic topic = topics.findById(post.getTopicId()).orElseThrow();
     long position = posts.countByTopicIdAndIdLessThan(topic.getId(), post.getId());
     int page = (int) (position / PageResponse.PAGE_SIZE) + 1;
-    return new PostLocation(post.getId(), topic.getId(), topic.getSlug(), page);
+    // The slug is made from the title, which a removed topic keeps private (FR-5.7); without it the
+    // topic page is still found by id and shows the "removed" notice.
+    boolean hideTitle =
+        topic.isDeleted() && !(viewer != null && viewer.getRole() == UserRole.ADMIN);
+    return new PostLocation(post.getId(), topic.getId(), hideTitle ? "" : topic.getSlug(), page);
   }
 }
