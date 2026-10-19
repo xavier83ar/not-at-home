@@ -152,6 +152,15 @@ Posts are written with Editor.js and stored as JSON (`posts.content`), plus thei
 - The top bar box and the `/search` page are plain GET forms (`/search?q=...&category=...`), so search works without JavaScript; with it, the router handles the submit and the address only carries the filters that are set. The page is server-rendered, `noindex` and in `robots.txt`. Results link to the post's permanent link, and `sanitizeSnippet` (frontend) keeps nothing but `<mark>` in a snippet.
 - The query is plain SQL in `SearchRepository` (the filters are optional, which a fixed JPA query handles badly).
 
+## Profiles
+
+`GET /api/users/<username>` (public, any case) is a user's profile page (FR-8.1): display name, avatar, role, join date, the number of visible posts, the profile text (Editor.js JSON) and their 5 newest topics and 10 newest posts. The email is never in it (NFR-8). Deleted accounts and unknown names are a 404; banned users keep their profile, since their posts stay visible. Removed posts and topics are left out of the count and the lists, and so is a topic whose opening post its author removed while it has replies: its title is part of what they removed.
+
+Editing one's own profile needs a login but not a verified email (FR-8.2):
+
+- `PUT /api/me/profile`: `displayName` (at most 50 characters) and `profileContent`, checked and cleaned like a post. Leaving `profileContent` out, or sending a document with nothing in it, clears the text.
+- `PUT /api/me/avatar` with the `uploadId` of an image the user uploaded; `DELETE /api/me/avatar` goes back to the generated initials. Someone else's upload is refused.
+
 ## SEO
 
 Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area, post permalinks and search results are `noindex` and listed in `robots.txt`.

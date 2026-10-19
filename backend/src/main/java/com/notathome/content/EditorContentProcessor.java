@@ -53,17 +53,36 @@ public class EditorContentProcessor {
    *     references an image that is not one of our uploads, or has nothing to show
    */
   public ProcessedContent process(JsonNode document) {
-    return new Run().process(document);
+    return new Run("content", false).process(document);
+  }
+
+  /**
+   * For content that may be left empty, like a profile (FR-8.2): returns null for no document or
+   * one with nothing to show, which clears it. Anything else is checked exactly as in {@link
+   * #process}, with failures reported on {@code field}.
+   */
+  public ProcessedContent processOptional(JsonNode document, String field) {
+    return new Run(field, true).process(document);
   }
 
   /** One call's state: the plain-text lines and the number of list items seen so far. */
   private final class Run {
 
+    private final String field;
+    private final boolean allowEmpty;
     private final List<String> textLines = new ArrayList<>();
     private int listItems;
     private boolean hasContent;
 
+    Run(String field, boolean allowEmpty) {
+      this.field = field;
+      this.allowEmpty = allowEmpty;
+    }
+
     ProcessedContent process(JsonNode document) {
+      if (allowEmpty && (document == null || document.isNull())) {
+        return null;
+      }
       if (document == null || !document.isObject() || !document.path("blocks").isArray()) {
         throw invalid("must be an Editor.js document with a list of blocks");
       }
@@ -83,6 +102,9 @@ public class EditorContentProcessor {
         }
       }
       if (!hasContent) {
+        if (allowEmpty) {
+          return null;
+        }
         throw invalid("can't be empty");
       }
       ObjectNode result = mapper.createObjectNode();
@@ -308,6 +330,10 @@ public class EditorContentProcessor {
       }
     }
 
+    private FieldErrorsException invalid(String message) {
+      return new FieldErrorsException(Map.of(field, List.of(message)));
+    }
+
     /** Same for text that is not HTML (code, addresses), which must not be stripped of "tags". */
     private void recordPlain(String text) {
       if (!text.isBlank()) {
@@ -322,9 +348,5 @@ public class EditorContentProcessor {
     block.put("type", type);
     block.set("data", data);
     return block;
-  }
-
-  private static FieldErrorsException invalid(String message) {
-    return new FieldErrorsException(Map.of("content", List.of(message)));
   }
 }

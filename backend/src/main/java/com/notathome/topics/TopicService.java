@@ -127,6 +127,12 @@ public class TopicService {
             .getContent());
   }
 
+  /** The topics an author started most recently, for their profile (FR-8.1). */
+  @Transactional(readOnly = true)
+  public List<TopicSummary> recentByAuthor(Long authorId, int limit) {
+    return summaries(topics.recentByAuthor(authorId, PageRequest.of(0, limit)));
+  }
+
   /**
    * FR-4.3: a topic and one page of its posts. A removed topic answers with {@code removed: true}
    * and the five most recently active topics of its category (FR-5.7); only admins also get what

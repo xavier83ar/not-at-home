@@ -155,6 +155,41 @@ class EditorContentProcessorTests {
   }
 
   @Test
+  void anOptionalDocumentMayBeLeftEmpty() {
+    assertThat(processor.processOptional(null, "profileContent")).isNull();
+    assertThat(processor.processOptional(mapper.readTree("null"), "profileContent")).isNull();
+    assertThat(processor.processOptional(mapper.readTree("{\"blocks\": []}"), "profileContent"))
+        .isNull();
+    assertThat(
+            processor.processOptional(
+                mapper.readTree("{\"blocks\": [{\"type\": \"delimiter\", \"data\": {}}]}"),
+                "profileContent"))
+        .isNull();
+    assertThat(
+            processor.processOptional(
+                mapper.readTree(
+                    "{\"blocks\": [{\"type\": \"paragraph\", \"data\": {\"text\": \"Hi\"}}]}"),
+                "profileContent"))
+        .isNotNull();
+  }
+
+  @Test
+  void anOptionalDocumentIsStillCheckedAndReportsOnItsOwnField() {
+    assertThatThrownBy(
+            () ->
+                processor.processOptional(
+                    mapper.readTree("{\"blocks\": [{\"type\": \"embed\", \"data\": {}}]}"),
+                    "profileContent"))
+        .isInstanceOfSatisfying(
+            FieldErrorsException.class,
+            e ->
+                assertThat(e.getErrors().get("profileContent"))
+                    .singleElement()
+                    .asString()
+                    .contains("'embed' blocks are not allowed"));
+  }
+
+  @Test
   void rejectsMalformedDocuments() {
     assertInvalid("[]", "must be an Editor.js document");
     assertInvalid("{\"blocks\": \"x\"}", "must be an Editor.js document");

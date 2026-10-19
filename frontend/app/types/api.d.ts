@@ -20,7 +20,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/admin/categories/{id}": {
+    "/api/me/profile": {
         parameters: {
             query?: never;
             header?: never;
@@ -29,6 +29,38 @@ export interface paths {
         };
         get?: never;
         put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changeAvatar"];
+        post?: never;
+        delete: operations["removeAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update_1"];
         post?: never;
         delete: operations["delete_1"];
         options?: never;
@@ -228,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{username}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/uploads/{key}": {
         parameters: {
             query?: never;
@@ -251,7 +299,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["get_1"];
         put?: never;
         post?: never;
         delete?: never;
@@ -444,6 +492,14 @@ export interface components {
             /** Format: date-time */
             editedAt?: string | null;
         };
+        UpdateProfileRequest: {
+            displayName: string;
+            profileContent?: components["schemas"]["EditorDocument"];
+        };
+        AvatarRequest: {
+            /** Format: int64 */
+            uploadId: number;
+        };
         CategoryRequest: {
             name: string;
             description: string;
@@ -542,6 +598,35 @@ export interface components {
         ForgotPasswordRequest: {
             /** Format: email */
             email: string;
+        };
+        ProfilePost: {
+            /** Format: int64 */
+            postId: number;
+            /** Format: int64 */
+            topicId: number;
+            topicSlug: string;
+            topicTitle: string;
+            category: components["schemas"]["CategoryRef"];
+            /** @description Plain text, shortened */
+            excerpt: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UserProfileResponse: {
+            /** Format: int64 */
+            id: number;
+            username: string;
+            displayName: string;
+            avatarUrl?: string | null;
+            /** @enum {string} */
+            role: "USER" | "ADMIN";
+            /** Format: date-time */
+            joinedAt: string;
+            /** Format: int64 */
+            postCount: number;
+            profileContent?: components["schemas"]["EditorDocument"];
+            recentTopics: components["schemas"]["TopicSummary"][];
+            recentPosts: components["schemas"]["ProfilePost"][];
         };
         PageResponseTopicSummary: {
             items: components["schemas"]["TopicSummary"][];
@@ -689,6 +774,68 @@ export interface operations {
         };
     };
     update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    changeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AvatarRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    removeAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -1029,6 +1176,28 @@ export interface operations {
             };
         };
     };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                username: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["UserProfileResponse"];
+                };
+            };
+        };
+    };
     serve: {
         parameters: {
             query?: never;
@@ -1051,7 +1220,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    get_1: {
         parameters: {
             query?: {
                 page?: number;

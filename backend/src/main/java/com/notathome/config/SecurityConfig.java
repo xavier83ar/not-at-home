@@ -127,7 +127,9 @@ class SecurityConfig {
                         "/api/topics/*",
                         "/api/home",
                         "/api/search",
-                        "/api/posts/*/location")
+                        "/api/posts/*/location",
+                        // Public profiles (FR-8.1); editing one is under /api/me and needs a login.
+                        "/api/users/*")
                     .permitAll()
                     // FR-2.3 and the rest of the admin panel (M8): every admin endpoint lives under
                     // this path, so authorization for all of them is this one rule.
