@@ -23,6 +23,13 @@ const { data: profile, error } = await useAsyncData('settings-profile', () =>
       Your settings could not be loaded. Please try again later.
     </BAlert>
     <ProfileSettings v-else :profile="profile" />
+
+    <hr class="my-5" />
+    <EmailSettings />
+    <hr class="my-5" />
+    <PasswordSettings />
+    <hr class="my-5" />
+    <DeleteAccountSettings />
   </section>
 </template>
 
