@@ -33,7 +33,7 @@ defineProps<{ topic: TopicSummary; showCategory?: boolean }>()
         </NuxtLink>
       </div>
       <div class="small text-body-secondary">
-        by {{ topic.author.displayName }}
+        by <AuthorName :author="topic.author" />
         <template v-if="showCategory">
           · in
           <NuxtLink :to="`/categories/${topic.category.slug}`" class="text-body-secondary">{{

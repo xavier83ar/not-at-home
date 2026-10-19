@@ -77,8 +77,10 @@ async function remove() {
     <div class="card-header d-flex align-items-center gap-2 bg-transparent">
       <UserAvatar :name="post.author.displayName" :src="post.author.avatarUrl" :size="32" />
       <div class="d-flex flex-column flex-sm-row align-items-sm-center column-gap-2 me-auto">
-        <span class="fw-semibold">{{ post.author.displayName }}</span>
-        <span class="small text-body-secondary">@{{ post.author.username }}</span>
+        <AuthorName :author="post.author" class="fw-semibold" />
+        <span v-if="!post.author.deleted" class="small text-body-secondary"
+          >@{{ post.author.username }}</span
+        >
       </div>
       <span v-if="post.author.role === 'ADMIN'" class="badge text-bg-accent">Admin</span>
       <span v-if="post.opening" class="badge text-bg-secondary">Original post</span>

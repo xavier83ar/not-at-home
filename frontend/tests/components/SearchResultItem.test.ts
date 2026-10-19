@@ -14,6 +14,7 @@ const result = (snippet: string) => ({
     displayName: 'Alice',
     avatarUrl: null,
     role: 'USER' as const,
+    deleted: false,
   },
   snippet,
   createdAt: '2026-01-31T10:00:00Z',
@@ -33,8 +34,9 @@ describe('SearchResultItem', () => {
     expect(links[0]!.props('to')).toBe('/posts/42')
     // The title is text, not HTML.
     expect(links[0]!.text()).toBe('Best <trails>')
-    expect(links[1]!.props('to')).toBe('/categories/hiking')
-    expect(wrapper.text()).toContain('Alice')
+    expect(links[1]!.props('to')).toBe('/users/alice')
+    expect(links[1]!.text()).toBe('Alice')
+    expect(links[2]!.props('to')).toBe('/categories/hiking')
     expect(wrapper.find('.search-snippet').html()).toContain('sturdy <mark>tent</mark>')
   })
 
