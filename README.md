@@ -107,7 +107,7 @@ In the frontend, always call the backend through `$api` (`useNuxtApp().$api`): i
 
 Sign up at <http://localhost:3000/register>. The verification email goes to Mailpit (<http://localhost:8025>); open it there and click the link. People can log in before verifying but can't post (FR-1.9), and the page shows a banner with a "Resend email" button until they do.
 
-Forgot your password? Use <http://localhost:3000/forgot-password>; the email arrives in Mailpit too. The request always answers the same way whether or not the address has an account, so it can't be used to find out who is registered (the lookup, the token and the email all happen on another thread, so the response time doesn't give it away either). Reset links last 1 hour and work once, and a reset logs the user out everywhere: every session and every remembered login, including the browser that finishes the reset. For code that needs the same (password change, ban, demotion), use `UserSessions.endAll(username)`.
+Forgot your password? Use <http://localhost:3000/forgot-password>; the email arrives in Mailpit too. The request always answers the same way whether or not the address has an account, so it can't be used to find out who is registered (the lookup, the token and the email all happen on another thread, so the response time doesn't give it away either). Reset links last 1 hour and work once, and a reset logs the user out everywhere: every session and every remembered login, including the browser that finishes the reset. For code that needs the same (ban, demotion, account deletion), use `UserSessions.endAll(username)`; a password change uses `UserSessions.endOthers(username, currentSessionId)`, which keeps the session that made the change.
 
 To make an account an admin, or to skip the email, edit it directly (`docker compose exec postgres psql -U notathome -d notathome`):
 
@@ -163,6 +163,14 @@ Editing one's own profile needs a login but not a verified email (FR-8.2):
 
 In the frontend, `/users/<username>` is the profile page (indexable; another letter case is redirected to the real username) and `/settings` is the settings page (login required, `noindex`, in `robots.txt`). The settings page's profile form reads its starting values from the public profile. A new avatar is uploaded and applied as soon as it is picked; the display name and profile text are saved with the form. Names of authors link to their profile through `AuthorName`, except for deleted accounts: `AuthorResponse.deleted` is true for them, and they show as plain "Deleted user" text.
 
+## Account
+
+Changing the password or email and deleting the account (FR-8.3 to FR-8.5) need a login and the current password, not a verified email (a mistyped address is the usual reason for being unverified). A wrong password is a 400 with `errors.currentPassword` (`errors.password` for deletion). These endpoints have their own rate limit, since they check a password.
+
+- `PUT /api/me/password` (`currentPassword`, `newPassword`, same rules as at sign-up). Every other session and every remembered login is ended, and so are reset links already asked for. The session that made the change stays.
+- `POST /api/me/email-change` (`currentPassword`, `email`). Sends a link to the **new** address; the account keeps its current one until that link is used (`POST /api/auth/verify-email`, the same page as for verification), which also counts as verifying it. `GET /api/me` reports the waiting address as `pendingEmail`. A new request replaces the earlier link, and an address someone else registered in the meantime is refused when the link is used. The new address shares the per-address verification email budget, so this can't flood someone's inbox. Links are marked `email_change` in `email_verification_tokens`; an ordinary verification link still refuses an address that changed behind its back.
+- `POST /api/me/delete-account` (`password`). Deletes the account's posts the way deleting them by hand would (FR-5.2, FR-5.3: `AuthorPosts`, topic by topic under the topic lock, counters recounted), then anonymizes the account: username `deleted:<id>` and email `deleted-<id>@deleted.invalid` (`:` can't be in a username, so nobody can register them; the unique indexes keep seeing one value per account, and the real ones can register again), display name "Deleted user", and the password, `google_id`, avatar, profile text and any pending tokens are cleared. Every session ends, this browser's cookies included. Uploaded files stay on disk. The last admin gets a 409 with code `LAST_ADMIN` (FR-8.5); banned admins don't count as admins. `users.lockActiveAdmins()` is what to take before removing or demoting an admin (M8's demotion uses the same check).
+
 ## SEO
 
 Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area, post permalinks and search results are `noindex` and listed in `robots.txt`.
@@ -179,10 +187,11 @@ Requests that can be abused are limited (NFR-2). Over a limit the answer is `429
 | 5 per hour, per client | sign up, ask for a password reset |
 | 10 per hour, per client | reset a password, resend the verification email |
 | 30 per hour, per client | verify an email address |
-| 5 per hour, per email address | verification emails: the one at sign-up plus every resend |
+| 5 per hour, per email address | verification emails: the one at sign-up, every resend, and the ones for a change of address (counted for the new address) |
 | 3 per hour, per email address | password reset emails; over the limit nothing is sent and the request isn't told, so the answer never reveals whether an address has an account |
 | 30 per hour, per client | upload a file |
 | 30 per hour, per client | start a topic or reply |
+| 10 per hour, per client | change the password, change the email, delete the account (each has its own limit) |
 
 Add `@RateLimited(RateLimitPolicy.X)` to an endpoint to limit it per client (a new policy is one line in `RateLimitPolicy`). Requests rejected by CSRF protection don't count, reads are never limited, and malformed requests do count.
 

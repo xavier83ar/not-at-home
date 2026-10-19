@@ -15,9 +15,14 @@ public record CurrentUserResponse(
     @Schema(requiredMode = REQUIRED) String email,
     @Schema(requiredMode = REQUIRED) UserRole role,
     @Schema(requiredMode = REQUIRED) boolean emailVerified,
-    @Schema(requiredMode = NOT_REQUIRED, nullable = true) String avatarUrl) {
+    @Schema(requiredMode = NOT_REQUIRED, nullable = true) String avatarUrl,
+    @Schema(
+            requiredMode = NOT_REQUIRED,
+            nullable = true,
+            description = "The new address of a change that is waiting to be confirmed (FR-8.3)")
+        String pendingEmail) {
 
-  static CurrentUserResponse from(User user) {
+  static CurrentUserResponse from(User user, String pendingEmail) {
     return new CurrentUserResponse(
         user.getId(),
         user.getUsername(),
@@ -25,6 +30,7 @@ public record CurrentUserResponse(
         user.getEmail(),
         user.getRole(),
         user.isEmailVerified(),
-        user.getAvatarUrl());
+        user.getAvatarUrl(),
+        pendingEmail);
   }
 }

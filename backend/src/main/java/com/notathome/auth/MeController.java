@@ -14,9 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 class MeController {
 
   private final UserRepository users;
+  private final EmailVerificationService verification;
 
-  MeController(UserRepository users) {
+  MeController(UserRepository users, EmailVerificationService verification) {
     this.users = users;
+    this.verification = verification;
   }
 
   /**
@@ -29,7 +31,10 @@ class MeController {
     return users
         .findByIdAndDeletedAtIsNull(principal.getId())
         .filter(user -> user.getStatus() == UserStatus.ACTIVE)
-        .map(CurrentUserResponse::from)
+        .map(
+            user ->
+                CurrentUserResponse.from(
+                    user, verification.pendingEmail(user.getId()).orElse(null)))
         .orElseThrow(
             () -> {
               HttpSession session = request.getSession(false);

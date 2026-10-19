@@ -36,6 +36,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/me/avatar": {
         parameters: {
             query?: never;
@@ -126,6 +142,38 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["reply"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/email-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["changeEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/me/delete-account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["deleteAccount"];
         delete?: never;
         options?: never;
         head?: never;
@@ -497,6 +545,10 @@ export interface components {
             displayName: string;
             profileContent?: components["schemas"]["EditorDocument"];
         };
+        ChangePasswordRequest: {
+            currentPassword: string;
+            newPassword: string;
+        };
         AvatarRequest: {
             /** Format: int64 */
             uploadId: number;
@@ -566,6 +618,14 @@ export interface components {
             /** Format: int64 */
             lastPostId: number;
         };
+        ChangeEmailRequest: {
+            currentPassword: string;
+            /** Format: email */
+            email: string;
+        };
+        DeleteAccountRequest: {
+            password: string;
+        };
         VerifyEmailRequest: {
             token: string;
         };
@@ -590,6 +650,8 @@ export interface components {
             role: "USER" | "ADMIN";
             emailVerified: boolean;
             avatarUrl?: string | null;
+            /** @description The new address of a change that is waiting to be confirmed (FR-8.3) */
+            pendingEmail?: string | null;
         };
         LoginRequest: {
             login: string;
@@ -784,6 +846,28 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateProfileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
             };
         };
         responses: {
@@ -1000,6 +1084,50 @@ export interface operations {
                 content: {
                     "*/*": components["schemas"]["PostResponse"];
                 };
+            };
+        };
+    };
+    changeEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

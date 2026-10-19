@@ -36,6 +36,21 @@ public interface PostRepository extends JpaRepository<Post, Long> {
   @Query("update Post p set p.deletedAt = :at where p.topicId = :topicId and p.deletedAt is null")
   void removeAllOfTopic(@Param("topicId") Long topicId, @Param("at") Instant at);
 
+  /** The active topics in which the author has visible posts, in id order (a fixed lock order). */
+  @Query(
+      "select distinct p.topicId from Post p join Topic t on p.topicId = t.id"
+          + " where p.authorId = :authorId and p.deletedAt is null and t.deletedAt is null"
+          + " order by p.topicId")
+  List<Long> activeTopicIdsWithPostsBy(@Param("authorId") Long authorId);
+
+  /** Removes one author's posts in a topic (FR-8.4). */
+  @Modifying
+  @Query(
+      "update Post p set p.deletedAt = :at"
+          + " where p.topicId = :topicId and p.authorId = :authorId and p.deletedAt is null")
+  void removeByAuthor(
+      @Param("topicId") Long topicId, @Param("authorId") Long authorId, @Param("at") Instant at);
+
   record CategoryPostCount(Long categoryId, long posts) {}
 
   /** Visible posts in each category's active topics, for the category pages (FR-2.2). */

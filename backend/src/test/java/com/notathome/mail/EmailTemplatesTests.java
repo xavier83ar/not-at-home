@@ -20,6 +20,17 @@ class EmailTemplatesTests {
   }
 
   @Test
+  void addressChangeEmailExplainsTheOldAddressStaysUntilConfirmed() {
+    EmailMessage message = EmailTemplates.changeEmail("Alice <A>", URL);
+
+    assertThat(message.subject()).isEqualTo("Confirm your new email address");
+    assertThat(message.text()).contains("Hi Alice <A>,", URL, "keeps its current address");
+    assertThat(message.html())
+        .contains("Hi Alice &lt;A&gt;,", "Confirm my new address", "cid:logo")
+        .contains("href=\"" + URL + "\"");
+  }
+
+  @Test
   void userSuppliedTextIsEscapedInHtmlButNotInThePlainText() {
     String name = "<script>alert('x')</script> & \"Co\"";
 

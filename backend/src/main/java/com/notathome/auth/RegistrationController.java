@@ -44,6 +44,6 @@ class RegistrationController {
         UsernamePasswordAuthenticationToken.authenticated(
             principal, null, principal.getAuthorities());
     sessionLogin.start(authentication, request, response);
-    return CurrentUserResponse.from(user);
+    return CurrentUserResponse.from(user, null);
   }
 }

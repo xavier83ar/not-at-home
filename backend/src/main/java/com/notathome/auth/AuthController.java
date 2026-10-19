@@ -19,12 +19,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.authentication.logout.CompositeLogoutHandler;
-import org.springframework.security.web.authentication.logout.LogoutHandler;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.csrf.CsrfLogoutHandler;
 import org.springframework.security.web.csrf.CsrfToken;
-import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,24 +36,22 @@ class AuthController {
   private final UserRepository users;
   private final SessionLogin sessionLogin;
   private final AuthRememberMeServices rememberMeServices;
-  private final LogoutHandler logoutHandler;
+  private final SessionLogout sessionLogout;
+  private final EmailVerificationService verification;
 
   AuthController(
       AuthenticationManager authenticationManager,
       UserRepository users,
       SessionLogin sessionLogin,
       AuthRememberMeServices rememberMeServices,
-      CsrfTokenRepository csrfTokenRepository) {
+      SessionLogout sessionLogout,
+      EmailVerificationService verification) {
     this.authenticationManager = authenticationManager;
     this.users = users;
     this.sessionLogin = sessionLogin;
     this.rememberMeServices = rememberMeServices;
-    // Remember-me first: it needs the authentication to know whose tokens to remove.
-    this.logoutHandler =
-        new CompositeLogoutHandler(
-            rememberMeServices,
-            new CsrfLogoutHandler(csrfTokenRepository),
-            new SecurityContextLogoutHandler());
+    this.sessionLogout = sessionLogout;
+    this.verification = verification;
   }
 
   /**
@@ -115,7 +108,7 @@ class AuthController {
 
     AuthUser principal = (AuthUser) authentication.getPrincipal();
     User user = users.findByIdAndDeletedAtIsNull(principal.getId()).orElseThrow();
-    return CurrentUserResponse.from(user);
+    return CurrentUserResponse.from(user, verification.pendingEmail(user.getId()).orElse(null));
   }
 
   /** Ends the session. Safe to call when not logged in. */
@@ -123,6 +116,6 @@ class AuthController {
   @ResponseStatus(HttpStatus.NO_CONTENT)
   void logout(
       Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
-    logoutHandler.logout(request, response, authentication);
+    sessionLogout.logout(request, response, authentication);
   }
 }

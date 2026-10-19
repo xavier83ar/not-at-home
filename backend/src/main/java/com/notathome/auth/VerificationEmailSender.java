@@ -30,7 +30,11 @@ class VerificationEmailSender {
   void send(VerificationEmailRequested event) {
     String url = properties.frontendUrl() + "/verify-email?token=" + event.token();
     try {
-      mailService.send(event.email(), EmailTemplates.verifyEmail(event.displayName(), url));
+      mailService.send(
+          event.email(),
+          event.addressChange()
+              ? EmailTemplates.changeEmail(event.displayName(), url)
+              : EmailTemplates.verifyEmail(event.displayName(), url));
     } catch (RuntimeException e) {
       // The address is personal data; the user id is enough to find the account.
       log.error("Could not send the verification email to user {}", event.userId(), e);

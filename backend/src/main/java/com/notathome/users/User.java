@@ -27,6 +27,9 @@ public class User {
   private String displayName;
   private String avatarUrl;
 
+  /** Only ever cleared here for now: Google sign-in (M10) is what sets it. */
+  private String googleId;
+
   /** Editor.js JSON, already validated and sanitized (see {@code EditorContentProcessor}). */
   @JdbcTypeCode(SqlTypes.JSON)
   private String profileContent;
@@ -73,6 +76,12 @@ public class User {
 
   public void markEmailVerified(Instant at) {
     this.emailVerifiedAt = at;
+  }
+
+  /** FR-8.3: the address changes once the new one is verified, which also counts as verifying. */
+  public void changeEmail(String email, Instant verifiedAt) {
+    this.email = email;
+    this.emailVerifiedAt = verifiedAt;
   }
 
   public String getPasswordHash() {
@@ -124,6 +133,25 @@ public class User {
 
   public Instant getCreatedAt() {
     return createdAt;
+  }
+
+  /**
+   * FR-8.4: the account is soft deleted and everything that identifies it is dropped, so the same
+   * username and email can register again. The username and email become values that can't be
+   * registered ({@code :} is not allowed in usernames), and the unique indexes still see them, one
+   * per account. {@code google_id} is cleared too, so a Google identity is never stuck on an
+   * account nobody can use.
+   */
+  public void anonymize(Instant at) {
+    this.username = "deleted:" + id;
+    this.email = "deleted-" + id + "@deleted.invalid";
+    this.displayName = "Deleted user";
+    this.passwordHash = null;
+    this.googleId = null;
+    this.avatarUrl = null;
+    this.profileContent = null;
+    this.emailVerifiedAt = null;
+    this.deletedAt = at;
   }
 
   public boolean isDeleted() {

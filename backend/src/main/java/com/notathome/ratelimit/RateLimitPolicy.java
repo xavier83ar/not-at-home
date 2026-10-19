@@ -26,6 +26,12 @@ public enum RateLimitPolicy {
   UPLOAD(30, Duration.ofHours(1)),
   /** Per IP. Starting topics, replying and editing posts share it (NFR-2). */
   POSTING(30, Duration.ofHours(1)),
+  /** Per IP. Each of these checks the current password, so they must not allow guessing it. */
+  CHANGE_PASSWORD(10, Duration.ofHours(1)),
+  /** Per IP. */
+  CHANGE_EMAIL(10, Duration.ofHours(1)),
+  /** Per IP. */
+  DELETE_ACCOUNT(10, Duration.ofHours(1)),
 
   /**
    * Per email address, shared by the registration email and every resend. Stops someone who
