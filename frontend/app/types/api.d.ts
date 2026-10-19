@@ -260,6 +260,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/posts/{id}/location": {
         parameters: {
             query?: never;
@@ -566,6 +582,28 @@ export interface components {
             topic?: components["schemas"]["TopicDetail"];
             posts?: components["schemas"]["PageResponsePostResponse"];
             recentTopics: components["schemas"]["TopicSummary"][];
+        };
+        PageResponseSearchResult: {
+            items: components["schemas"]["SearchResult"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            totalPages: number;
+            /** Format: int64 */
+            totalItems: number;
+        };
+        SearchResult: {
+            /** Format: int64 */
+            postId: number;
+            /** Format: int64 */
+            topicId: number;
+            topicSlug: string;
+            topicTitle: string;
+            category: components["schemas"]["CategoryRef"];
+            author: components["schemas"]["AuthorResponse"];
+            snippet: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         PostLocation: {
             /** Format: int64 */
@@ -1033,6 +1071,34 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["TopicPageResponse"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                q?: string;
+                category?: string;
+                author?: string;
+                from?: string;
+                to?: string;
+                sort?: string;
+                page?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PageResponseSearchResult"];
                 };
             };
         };
