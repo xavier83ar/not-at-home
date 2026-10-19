@@ -34,6 +34,17 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
   /** The most recently active topics of the whole forum, for the all-topics page. */
   Page<Topic> findByDeletedAtIsNullOrderByLastPostAtDescIdDesc(Pageable pageable);
 
+  /**
+   * An author's newest topics for their profile (FR-8.1). A topic whose opening post the author
+   * removed (FR-5.3) stays in its category but not here: its title is part of what they removed.
+   */
+  @Query(
+      "select t from Topic t where t.authorId = :authorId and t.deletedAt is null"
+          + " and not exists (select 1 from Post p where p.topicId = t.id and p.deletedAt is not null"
+          + " and p.id = (select min(f.id) from Post f where f.topicId = t.id))"
+          + " order by t.createdAt desc, t.id desc")
+  List<Topic> recentByAuthor(@Param("authorId") Long authorId, Pageable pageable);
+
   /** FR-2.4: a category with active topics cannot be deleted. */
   boolean existsByCategoryIdAndDeletedAtIsNull(Long categoryId);
 

@@ -70,6 +70,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
           + " group by p.authorId order by count(p) desc, p.authorId asc")
   List<AuthorPostCount> mostActiveAuthorsSince(@Param("since") Instant since, Pageable pageable);
 
+  /** Visible posts of one author in active topics, for their profile (FR-8.1). */
+  @Query(
+      "select count(p) from Post p join Topic t on p.topicId = t.id"
+          + " where p.authorId = :authorId and p.deletedAt is null and t.deletedAt is null")
+  long countVisibleByAuthor(@Param("authorId") Long authorId);
+
+  /** The author's newest visible posts in active topics, newest first (FR-8.1). */
+  @Query(
+      "select p from Post p join Topic t on p.topicId = t.id"
+          + " where p.authorId = :authorId and p.deletedAt is null and t.deletedAt is null"
+          + " order by p.id desc")
+  List<Post> recentVisibleByAuthor(@Param("authorId") Long authorId, Pageable pageable);
+
   record LatestPost(Long topicId, Long postId) {}
 
   /** For each topic, its newest post that has not been removed (FR-7.2). */

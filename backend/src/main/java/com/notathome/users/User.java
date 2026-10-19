@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "users")
@@ -24,6 +26,10 @@ public class User {
   private String passwordHash;
   private String displayName;
   private String avatarUrl;
+
+  /** Editor.js JSON, already validated and sanitized (see {@code EditorContentProcessor}). */
+  @JdbcTypeCode(SqlTypes.JSON)
+  private String profileContent;
 
   @Enumerated(EnumType.STRING)
   private UserRole role = UserRole.USER;
@@ -83,6 +89,21 @@ public class User {
 
   public String getAvatarUrl() {
     return avatarUrl;
+  }
+
+  public String getProfileContent() {
+    return profileContent;
+  }
+
+  /** FR-8.2. A null {@code profileContent} clears the profile text. */
+  public void updateProfile(String displayName, String profileContent) {
+    this.displayName = displayName;
+    this.profileContent = profileContent;
+  }
+
+  /** FR-8.2. A null URL goes back to the generated initials avatar. */
+  public void changeAvatar(String avatarUrl) {
+    this.avatarUrl = avatarUrl;
   }
 
   public UserRole getRole() {
