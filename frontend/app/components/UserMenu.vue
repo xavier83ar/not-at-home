@@ -28,6 +28,9 @@ async function onLogout() {
     <BDropdownText class="small text-body-secondary"
       >Signed in as @{{ user.username }}</BDropdownText
     >
+    <BDropdownDivider />
+    <BDropdownItem :to="profilePath(user.username)">Your profile</BDropdownItem>
+    <BDropdownItem to="/settings">Settings</BDropdownItem>
     <template v-if="user.role === 'ADMIN'">
       <BDropdownDivider />
       <BDropdownItem to="/admin/categories">Manage categories</BDropdownItem>

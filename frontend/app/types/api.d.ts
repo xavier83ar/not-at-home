@@ -476,6 +476,7 @@ export interface components {
             avatarUrl?: string | null;
             /** @enum {string} */
             role: "USER" | "ADMIN";
+            deleted: boolean;
         };
         PostResponse: {
             /** Format: int64 */

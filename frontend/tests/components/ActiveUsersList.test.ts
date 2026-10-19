@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { RouterLinkStub, mount } from '@vue/test-utils'
 import ActiveUsersList from '~/components/ActiveUsersList.vue'
 
 const user = (id: number, displayName: string, avatarUrl: string | null = null) => ({
@@ -8,6 +8,7 @@ const user = (id: number, displayName: string, avatarUrl: string | null = null) 
   displayName,
   avatarUrl,
   role: 'USER' as const,
+  deleted: false,
 })
 
 describe('ActiveUsersList', () => {
@@ -19,6 +20,7 @@ describe('ActiveUsersList', () => {
           { user: user(2, 'Bob'), postCount: 1 },
         ],
       },
+      global: { stubs: { NuxtLink: RouterLinkStub } },
     })
     const rows = wrapper.findAll('li')
     expect(rows).toHaveLength(2)
@@ -29,6 +31,14 @@ describe('ActiveUsersList', () => {
     expect(rows[1]!.text()).not.toContain('1 posts')
   })
 
+  it('links each name to the profile', () => {
+    const wrapper = mount(ActiveUsersList, {
+      props: { users: [{ user: user(1, 'Alice'), postCount: 12 }] },
+      global: { stubs: { NuxtLink: RouterLinkStub } },
+    })
+    expect(wrapper.findComponent(RouterLinkStub).props('to')).toBe('/users/alice')
+  })
+
   it('shows initials for people without an avatar and the picture for those with one', () => {
     const wrapper = mount(ActiveUsersList, {
       props: {
@@ -37,6 +47,7 @@ describe('ActiveUsersList', () => {
           { user: user(2, 'Bob', '/api/uploads/bob.png'), postCount: 1 },
         ],
       },
+      global: { stubs: { NuxtLink: RouterLinkStub } },
     })
     expect(wrapper.text()).toContain('AS')
     expect(wrapper.find('img').attributes('src')).toBe('/api/uploads/bob.png')

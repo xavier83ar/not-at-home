@@ -21,6 +21,8 @@ const props = defineProps<{
 const { $api } = useNuxtApp()
 const holder = ref<HTMLElement>()
 const uploadError = ref<string>()
+/** False until Editor.js has loaded: saving earlier would read an editor that is not there. */
+const ready = ref(false)
 let editor: EditorJS | undefined
 
 async function uploadByFile(file: Blob) {
@@ -90,6 +92,8 @@ onMounted(async () => {
       },
     },
   })
+  await editor.isReady
+  ready.value = true
 })
 
 onBeforeUnmount(() => {
@@ -123,7 +127,7 @@ async function insertQuote(data: { text: string; caption: string; alignment: str
   editor.blocks.insert('paragraph', {}, {}, index + 1, true)
 }
 
-defineExpose({ save, isEmpty, clear, insertQuote })
+defineExpose({ ready, save, isEmpty, clear, insertQuote })
 </script>
 
 <template>

@@ -153,6 +153,19 @@ class ProfileTests {
         .andExpect(jsonPath("$.recentPosts[0].excerpt").value("Kept reply"));
   }
 
+  @Test
+  void aDeletedAuthorIsFlaggedSoNobodyLinksToTheirProfile() throws Exception {
+    Long topicId = topic(mockMvc, alice, categoryId, "Alice's trail");
+    reply(mockMvc, bob, topicId, "Bob replies");
+    jdbc.update("update users set deleted_at = now() where username = 'alice'");
+
+    mockMvc
+        .perform(get("/api/topics/" + topicId))
+        .andExpect(jsonPath("$.posts.items[0].author.displayName").value("Deleted user"))
+        .andExpect(jsonPath("$.posts.items[0].author.deleted").value(true))
+        .andExpect(jsonPath("$.posts.items[1].author.deleted").value(false));
+  }
+
   // --- editing the profile (FR-8.2)
 
   @Test

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { components } from '~/types/api'
+import AuthorName from '~/components/AuthorName.vue'
 import { sanitizeSnippet } from '~/utils/sanitize'
 import { postPath } from '~/utils/topicUrl'
 
@@ -19,7 +20,7 @@ defineProps<{ result: SearchResult }>()
     <p class="search-snippet mb-1" v-html="sanitizeSnippet(result.snippet)" />
     <div class="small text-body-secondary d-flex flex-wrap align-items-center gap-1">
       <UserAvatar :name="result.author.displayName" :src="result.author.avatarUrl" :size="20" />
-      <span>{{ result.author.displayName }}</span>
+      <AuthorName :author="result.author" />
       <span aria-hidden="true">·</span>
       <NuxtLink :to="`/categories/${result.category.slug}`" class="text-body-secondary">{{
         result.category.name

@@ -11,5 +11,6 @@ Disallow: /verify-email
 Disallow: /topics/new
 Disallow: /posts/
 Disallow: /search
+Disallow: /settings
 # ...except uploaded images, which category covers and link previews load from there.
 Allow: /api/uploads/

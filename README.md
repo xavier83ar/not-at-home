@@ -161,6 +161,8 @@ Editing one's own profile needs a login but not a verified email (FR-8.2):
 - `PUT /api/me/profile`: `displayName` (at most 50 characters) and `profileContent`, checked and cleaned like a post. Leaving `profileContent` out, or sending a document with nothing in it, clears the text.
 - `PUT /api/me/avatar` with the `uploadId` of an image the user uploaded; `DELETE /api/me/avatar` goes back to the generated initials. Someone else's upload is refused.
 
+In the frontend, `/users/<username>` is the profile page (indexable; another letter case is redirected to the real username) and `/settings` is the settings page (login required, `noindex`, in `robots.txt`). The settings page's profile form reads its starting values from the public profile. A new avatar is uploaded and applied as soon as it is picked; the display name and profile text are saved with the form. Names of authors link to their profile through `AuthorName`, except for deleted accounts: `AuthorResponse.deleted` is true for them, and they show as plain "Deleted user" text.
+
 ## SEO
 
 Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area, post permalinks and search results are `noindex` and listed in `robots.txt`.
