@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inlineText, sanitizeInline } from '~/utils/sanitize'
+import { inlineText, sanitizeInline, sanitizeSnippet } from '~/utils/sanitize'
 
 describe('sanitizeInline', () => {
   it('keeps the formatting Editor.js produces', () => {
@@ -63,5 +63,20 @@ describe('inlineText', () => {
 
   it('decodes an escaped ampersand only once', () => {
     expect(inlineText('&amp;lt;')).toBe('&lt;')
+  })
+})
+
+describe('sanitizeSnippet', () => {
+  it('keeps the marks around matched words and the escaped text', () => {
+    const html = '1 &lt; 2 &amp; a <mark>tent</mark> &lt;b&gt;'
+    expect(sanitizeSnippet(html)).toBe(html)
+  })
+
+  it('drops everything but mark', () => {
+    expect(
+      sanitizeSnippet(
+        '<mark onclick="x()">a</mark> <b>b</b> <a href="https://x.example">c</a> <script>d</script><img src=x onerror=y>',
+      ),
+    ).toBe('<mark>a</mark> b c ')
   })
 })

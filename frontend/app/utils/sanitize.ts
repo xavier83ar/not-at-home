@@ -31,6 +31,15 @@ export function sanitizeInline(html: string): string {
   })
 }
 
+/**
+ * A search snippet (FR-6.2). The backend escapes the text and only puts `<mark>` around the
+ * matched words, so that is all this keeps; the rest is dropped again here in case that ever
+ * changes. Entities such as `&lt;` stay as they are, so the text still shows as typed.
+ */
+export function sanitizeSnippet(html: string): string {
+  return sanitizeHtml(html, { allowedTags: ['mark'], allowedAttributes: {} })
+}
+
 const NAMED_ENTITIES: Record<string, string> = {
   lt: '<',
   gt: '>',

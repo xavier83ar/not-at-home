@@ -149,11 +149,12 @@ Posts are written with Editor.js and stored as JSON (`posts.content`), plus thei
 - One result per matching post, 10 per page. A match on a topic's title belongs to the topic's first post that is still visible (the opening post, unless it was removed), and counts double in the relevance order.
 - Removed topics, removed posts and posts of deleted accounts are never returned, not even to admins. Posts of banned users are.
 - `snippet` is the matched text as HTML with nothing but `<mark>` tags: the text is cut by PostgreSQL's `ts_headline` with control characters as markers, then escaped as a whole, and only then are the markers turned into `<mark>`.
+- The top bar box and the `/search` page are plain GET forms (`/search?q=...&category=...`), so search works without JavaScript; with it, the router handles the submit and the address only carries the filters that are set. The page is server-rendered, `noindex` and in `robots.txt`. Results link to the post's permanent link, and `sanitizeSnippet` (frontend) keeps nothing but `<mark>` in a snippet.
 - The query is plain SQL in `SearchRepository` (the filters are optional, which a fixed JPA query handles badly).
 
 ## SEO
 
-Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area and post permalinks are `noindex` and listed in `robots.txt`.
+Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area, post permalinks and search results are `noindex` and listed in `robots.txt`.
 
 Canonical links and previews need an absolute address: set `NUXT_PUBLIC_SITE_URL` (read at runtime, default `http://localhost:3000`) to the public domain in production. There is no sitemap yet; it is planned for after the first release, once the public domain is known.
 
