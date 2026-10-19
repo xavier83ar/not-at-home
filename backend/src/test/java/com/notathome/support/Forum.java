@@ -70,6 +70,12 @@ public final class Forum {
   /** Creates a topic and returns its id. */
   public static Long topic(MockMvc mockMvc, Cookie who, Long categoryId, String title)
       throws Exception {
+    return topic(mockMvc, who, categoryId, title, "Opening post");
+  }
+
+  /** Creates a topic whose opening post says {@code text}, and returns its id. */
+  public static Long topic(MockMvc mockMvc, Cookie who, Long categoryId, String title, String text)
+      throws Exception {
     String body =
         send(
                 mockMvc,
@@ -77,7 +83,7 @@ public final class Forum {
                 who,
                 "/api/topics",
                 "{\"categoryId\":%d,\"title\":\"%s\",\"content\":%s}"
-                    .formatted(categoryId, title, document("Opening post")))
+                    .formatted(categoryId, title, document(text)))
             .andExpect(status().isCreated())
             .andReturn()
             .getResponse()

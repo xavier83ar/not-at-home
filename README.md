@@ -141,6 +141,16 @@ Posts are written with Editor.js and stored as JSON (`posts.content`), plus thei
 - Deleting is soft. A removed post stays in the topic as "This post was removed" (admins can still read it), a topic whose opening post is deleted while it has no replies is removed entirely, and a removed topic answers with a 410 page listing the category's recent topics. Counters (`reply_count`, last activity, category totals) are recounted in the same transaction as the change, never adjusted by one.
 - Editing and deleting are limited to the author for now; admin editing and deleting, locking, pinning and moving topics come with the admin panel (M8).
 
+## Search
+
+`GET /api/search` (public) searches post text and topic titles with PostgreSQL full-text search, English configuration (so `hikes` finds `hiking`). `posts.search_vector` and `topics.title_vector` are generated columns with GIN indexes (`V9__search.sql`); the JPA entities don't map them.
+
+- Parameters: `q` (required, 3 to 100 characters, understood like a web search: quotes for phrases, `-word` to exclude, `or`), and the optional `category` (slug), `author` (username, any case), `from` and `to` (days like `2026-01-31`, UTC, both included), `sort` (`relevance`, the default, or `date`) and `page`. Blank filters are ignored; an unknown category or author just matches nothing. Bad values are a 400 with an `errors` map, like any form.
+- One result per matching post, 10 per page. A match on a topic's title belongs to the topic's first post that is still visible (the opening post, unless it was removed), and counts double in the relevance order.
+- Removed topics, removed posts and posts of deleted accounts are never returned, not even to admins. Posts of banned users are.
+- `snippet` is the matched text as HTML with nothing but `<mark>` tags: the text is cut by PostgreSQL's `ts_headline` with control characters as markers, then escaped as a whole, and only then are the markers turned into `<mark>`.
+- The query is plain SQL in `SearchRepository` (the filters are optional, which a fixed JPA query handles badly).
+
 ## SEO
 
 Every public page is server-rendered with its own title, description, canonical URL and Open Graph tags (`useSeo()` in `frontend/app/composables/useSeo.ts`; page 2 and up of a list have their own canonical URL). Category, topic and list pages also carry breadcrumb structured data. Topic descriptions are a plain-text excerpt of the opening post; link previews use the category's cover image, or the brand icon when a page has none. Account pages, the admin area and post permalinks are `noindex` and listed in `robots.txt`.
