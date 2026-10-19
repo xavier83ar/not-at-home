@@ -2,6 +2,21 @@
 const { user } = useAuth()
 const route = useRoute()
 
+// The box shows what was searched for while the results are on screen.
+const term = ref(route.path === '/search' ? parseSearchQuery(route.query).q : '')
+watch(
+  () => route.fullPath,
+  () => {
+    term.value = route.path === '/search' ? parseSearchQuery(route.query).q : ''
+  },
+)
+
+// A plain GET form that works without JavaScript; once the page is hydrated this goes through the
+// router instead of reloading it.
+function search() {
+  return navigateTo({ path: '/search', query: searchRouteQuery({ q: term.value }) })
+}
+
 // By path: the router only lights a link up for its own route, not for `/categories/hiking`.
 const inCategories = computed(
   () => route.path === '/categories' || route.path.startsWith('/categories/'),
@@ -31,15 +46,24 @@ const inCategories = computed(
           </li>
         </BNavbarNav>
 
-        <!-- Search box placeholder; M6 makes it work. -->
-        <form class="flex-grow-1 mx-md-auto my-2 my-md-0 search-box" role="search" @submit.prevent>
+        <form
+          class="flex-grow-1 mx-md-auto my-2 my-md-0 search-box"
+          role="search"
+          action="/search"
+          method="get"
+          @submit.prevent="search"
+        >
           <label for="site-search" class="visually-hidden">Search the forum</label>
           <BFormInput
             id="site-search"
+            v-model="term"
+            name="q"
             type="search"
             placeholder="Search the forum"
             size="sm"
-            disabled
+            required
+            :minlength="MIN_KEYWORDS"
+            :maxlength="MAX_KEYWORDS"
           />
         </form>
 
