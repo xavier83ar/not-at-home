@@ -23,11 +23,15 @@ const background = computed(() =>
   </NuxtLink>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
+
 .home-card {
   display: flex;
   align-items: flex-end;
-  min-height: 14rem;
+  min-height: 18rem;
   height: 100%;
   background-color: #1f4d3a;
   background-size: cover;
@@ -37,17 +41,15 @@ const background = computed(() =>
   overflow: hidden;
   text-decoration: none;
   transition: transform 0.15s ease-in-out;
+
+  @include media-breakpoint-up('xl') {
+    min-height: 25rem;
+  }
 }
 
 .home-card:hover {
   color: #fff;
   transform: translateY(-2px);
-}
-
-@media (min-width: 992px) {
-  .home-card {
-    min-height: 18rem;
-  }
 }
 
 /* Keeps white text readable over any cover image. */

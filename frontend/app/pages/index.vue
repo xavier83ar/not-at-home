@@ -43,12 +43,9 @@ useSeo({
       </section>
 
       <template v-else>
-        <section aria-labelledby="home-categories" class="mb-5">
-          <div class="d-flex justify-content-between align-items-baseline mb-3">
-            <h2 id="home-categories" class="h4 mb-0">Categories</h2>
-            <NuxtLink to="/categories">All categories</NuxtLink>
-          </div>
-          <div class="row g-3">
+        <h2 id="home-categories" class="visually-hidden">Categories</h2>
+        <section aria-labelledby="home-categories" class="mb-4">
+          <div class="row g-3 mb-3">
             <div
               v-for="category in home.highlightedCategories"
               :key="category.id"
@@ -56,6 +53,9 @@ useSeo({
             >
               <HomeCategoryCard :category="category" />
             </div>
+          </div>
+          <div class="text-end">
+            <NuxtLink to="/categories">Browse all categories</NuxtLink>
           </div>
         </section>
 
@@ -75,7 +75,9 @@ useSeo({
                   show-category
                 />
               </ul>
-              <NuxtLink to="/topics">View all topics</NuxtLink>
+              <div class="text-end">
+                <NuxtLink to="/topics">View all topics</NuxtLink>
+              </div>
             </template>
           </section>
 
