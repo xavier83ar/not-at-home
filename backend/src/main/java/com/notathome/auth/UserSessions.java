@@ -6,9 +6,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Logs a user out everywhere: every session and every remembered login. Used when their credentials
- * change or their access is taken away (password reset now; password change, ban and demotion
- * later). Sessions are found by the username, which is the principal name Spring Session indexes
- * them under.
+ * change or their access is taken away (password reset, password change and account deletion; ban
+ * and demotion later). Sessions are found by the username, which is the principal name Spring
+ * Session indexes them under.
  */
 @Service
 class UserSessions {
@@ -25,6 +25,18 @@ class UserSessions {
 
   void endAll(String username) {
     sessions.findByPrincipalName(username).keySet().forEach(sessions::deleteById);
+    rememberMeTokens.removeUserTokens(username);
+  }
+
+  /**
+   * For a password change (FR-8.3): ends every session but the one making the change, and every
+   * remembered login. The browser that changed the password stays logged in until its session ends;
+   * if it was remembered, it has to log in again after that.
+   */
+  void endOthers(String username, String currentSessionId) {
+    sessions.findByPrincipalName(username).keySet().stream()
+        .filter(id -> !id.equals(currentSessionId))
+        .forEach(sessions::deleteById);
     rememberMeTokens.removeUserTokens(username);
   }
 }

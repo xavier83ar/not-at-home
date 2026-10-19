@@ -22,16 +22,21 @@ class EmailVerificationToken {
   private Instant expiresAt;
   private Instant usedAt;
 
+  /** Whether using the link changes the account's address, rather than verifying the current. */
+  private boolean emailChange;
+
   @Column(insertable = false, updatable = false)
   private Instant createdAt;
 
   protected EmailVerificationToken() {}
 
-  EmailVerificationToken(Long userId, String email, String tokenHash, Instant expiresAt) {
+  EmailVerificationToken(
+      Long userId, String email, String tokenHash, Instant expiresAt, boolean emailChange) {
     this.userId = userId;
     this.email = email;
     this.tokenHash = tokenHash;
     this.expiresAt = expiresAt;
+    this.emailChange = emailChange;
   }
 
   Long getUserId() {
@@ -40,6 +45,10 @@ class EmailVerificationToken {
 
   String getEmail() {
     return email;
+  }
+
+  boolean isEmailChange() {
+    return emailChange;
   }
 
   boolean isUsable(Instant now) {

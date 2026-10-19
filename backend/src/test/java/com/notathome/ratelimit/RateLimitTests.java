@@ -19,10 +19,12 @@ import com.notathome.users.UserRepository;
 import com.notathome.users.UserRole;
 import jakarta.servlet.http.Cookie;
 import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -30,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @RateLimitedIntegrationTest
 class RateLimitTests {
@@ -332,6 +335,70 @@ class RateLimitTests {
     assertThat(status(topicRequest(session, "/api/topics", "198.51.100.41", body)))
         .as("another client is not affected")
         .isEqualTo(400);
+  }
+
+  @Test
+  void passwordEmailAndDeletionChangesAreEachLimitedPerClient() throws Exception {
+    Cookie session =
+        Forum.userSession(mockMvc, users, passwordEncoder, "alice", UserRole.USER, true);
+    for (RateLimitPolicy policy :
+        List.of(
+            RateLimitPolicy.CHANGE_PASSWORD,
+            RateLimitPolicy.CHANGE_EMAIL,
+            RateLimitPolicy.DELETE_ACCOUNT)) {
+      for (int i = 0; i < 10; i++) {
+        limiter.consume(policy, IP);
+      }
+    }
+
+    String password = "{\"currentPassword\":\"wrong\",\"newPassword\":\"long enough\"}";
+    String email = "{\"currentPassword\":\"wrong\",\"email\":\"new@example.com\"}";
+    String delete = "{\"password\":\"wrong\"}";
+    assertThat(status(accountRequest(HttpMethod.PUT, "/api/me/password", session, IP, password)))
+        .isEqualTo(429);
+    assertThat(status(accountRequest(HttpMethod.POST, "/api/me/email-change", session, IP, email)))
+        .isEqualTo(429);
+    assertThat(
+            status(accountRequest(HttpMethod.POST, "/api/me/delete-account", session, IP, delete)))
+        .isEqualTo(429);
+    assertThat(
+            status(
+                accountRequest(
+                    HttpMethod.PUT, "/api/me/password", session, "198.51.100.42", password)))
+        .as("another client is not affected: the wrong password is just refused")
+        .isEqualTo(400);
+  }
+
+  @Test
+  void aMailboxOutOfBudgetCannotBeTheTargetOfAnAddressChange() throws Exception {
+    Cookie session =
+        Forum.userSession(mockMvc, users, passwordEncoder, "alice", UserRole.USER, true);
+    for (int i = 0; i < 5; i++) {
+      limiter.consume(
+          RateLimitPolicy.VERIFICATION_EMAIL_ADDRESS, RateLimiter.emailKey("target@example.com"));
+    }
+    String body = "{\"currentPassword\":\"" + PASSWORD + "\",\"email\":\"Target@Example.com\"}";
+
+    assertThat(status(accountRequest(HttpMethod.POST, "/api/me/email-change", session, IP, body)))
+        .isEqualTo(429);
+    assertThat(mail.sent()).isEmpty();
+  }
+
+  private MvcResult accountRequest(
+      HttpMethod method, String path, Cookie session, String ip, String json) throws Exception {
+    return mockMvc
+        .perform(
+            MockMvcRequestBuilders.request(method, path)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
+                .cookie(session)
+                .with(
+                    r -> {
+                      r.setRemoteAddr(ip);
+                      return r;
+                    })
+                .with(Csrf.token(mockMvc)))
+        .andReturn();
   }
 
   private MvcResult topicRequest(Cookie session, String path, String ip, String json)

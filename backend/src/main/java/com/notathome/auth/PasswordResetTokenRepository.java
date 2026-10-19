@@ -14,6 +14,9 @@ interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken,
   /** Call inside a transaction. */
   void deleteByUserIdAndUsedAtIsNull(Long userId);
 
+  /** Call inside a transaction. */
+  void deleteByUserId(Long userId);
+
   /**
    * Marks a token used, but only if nobody did already. The row count says whether this call is the
    * one that used it, so two requests with the same link can't both reset the password.

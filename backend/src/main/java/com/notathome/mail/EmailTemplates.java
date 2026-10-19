@@ -44,6 +44,38 @@ public final class EmailTemplates {
     return new EmailMessage(subject, text, html);
   }
 
+  /** Sent to the new address of an account that asked to change it (FR-8.3). */
+  public static EmailMessage changeEmail(String displayName, String verifyUrl) {
+    String subject = "Confirm your new email address";
+    String text =
+        """
+        Hi %s,
+
+        Someone asked to use this address for their Not at Home account. To confirm it, open:
+
+        %s
+
+        The link works for 24 hours. Until you confirm, the account keeps its current address. If \
+        you didn't ask for this, you can ignore this email.
+        """
+            .formatted(displayName, verifyUrl);
+    String html =
+        layout(
+            subject,
+            paragraph("Hi " + escape(displayName) + ",")
+                + paragraph(
+                    "Someone asked to use this address for their Not at Home account. To confirm"
+                        + " it, use the button below.")
+                + button("Confirm my new address", verifyUrl)
+                + small(
+                    "The link works for 24 hours. Until you confirm, the account keeps its current"
+                        + " address. If you didn't ask for this, you can ignore this email.")
+                + small(
+                    "Button not working? Paste this link into your browser:<br>"
+                        + link(verifyUrl)));
+    return new EmailMessage(subject, text, html);
+  }
+
   public static EmailMessage resetPassword(String displayName, String resetUrl) {
     String subject = "Reset your password";
     String text =
