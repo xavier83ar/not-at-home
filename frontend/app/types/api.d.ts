@@ -1077,8 +1077,8 @@ export interface operations {
     };
     search: {
         parameters: {
-            query?: {
-                q?: string;
+            query: {
+                q: string;
                 category?: string;
                 author?: string;
                 from?: string;

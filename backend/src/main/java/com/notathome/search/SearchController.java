@@ -1,6 +1,7 @@
 package com.notathome.search;
 
 import com.notathome.common.PageResponse;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +23,9 @@ class SearchController {
    */
   @GetMapping("/api/search")
   PageResponse<SearchResult> search(
-      @RequestParam(required = false) String q,
+      // Not required for Spring, so that a missing q is a field error like any other (see
+      // SearchService); the documentation says what it is.
+      @Parameter(required = true) @RequestParam(required = false) String q,
       @RequestParam(required = false) String category,
       @RequestParam(required = false) String author,
       @RequestParam(required = false) String from,
