@@ -36,6 +36,10 @@ public class EditorContentProcessor {
   private static final Set<String> COUNTER_TYPES =
       Set.of("numeric", "lower-roman", "upper-roman", "lower-alpha", "upper-alpha");
 
+  /** The image tool's on/off options: a border, a background, and stretching to the full width. */
+  private static final List<String> IMAGE_OPTIONS =
+      List.of("withBorder", "withBackground", "stretched");
+
   /** What {@link UploadUrl} produces: the random key plus the extension of a stored image. */
   private static final Pattern UPLOAD_PATH =
       Pattern.compile("^/api/uploads/([A-Za-z0-9_-]+\\.[a-z]+)$");
@@ -206,6 +210,11 @@ public class EditorContentProcessor {
       ObjectNode clean = mapper.createObjectNode();
       clean.set("file", file);
       clean.put("caption", caption);
+      // The image tool's display options (FR-4.4): plain on/off switches, so only true or false
+      // is kept. The tool itself reads the strings "true" and "false" too.
+      for (String option : IMAGE_OPTIONS) {
+        clean.put(option, flag(data.path(option)));
+      }
       return typed("image", clean);
     }
 
@@ -307,6 +316,12 @@ public class EditorContentProcessor {
         clean.add(cleanItem);
       }
       return clean;
+    }
+
+    private boolean flag(JsonNode value) {
+      return value.isBoolean()
+          ? value.booleanValue()
+          : value.isTextual() && value.asString().equals("true");
     }
 
     /** The sanitized inline HTML in {@code node.field}; blank when it is missing. */

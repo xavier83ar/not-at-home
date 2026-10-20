@@ -72,7 +72,7 @@ class EditorContentProcessorTests {
     assertThat(blocks.get(4).path("data").path("code").asString())
         .isEqualTo("if (a < b) { run(); }");
     assertThat(blocks.get(6).path("data").path("file").path("url").asString()).isEqualTo(imageUrl);
-    assertThat(blocks.get(6).path("data").has("withBorder")).isFalse();
+    assertThat(blocks.get(6).path("data").path("withBorder").booleanValue()).isTrue();
     assertThat(blocks.get(7).path("data").path("title").asString()).isEqualTo("Trail map");
     assertThat(blocks.get(7).path("data").has("meta")).isFalse();
 
@@ -250,6 +250,27 @@ class EditorContentProcessorTests {
           "images must be uploaded to this site");
     }
     assertInvalid("{\"blocks\": [{\"type\": \"image\", \"data\": {}}]}", "images must be uploaded");
+  }
+
+  @Test
+  void keepsTheImageDisplayOptionsAsPlainSwitches() {
+    ProcessedContent result =
+        process(
+            """
+            {"blocks": [
+              {"type": "image", "data": {"file": {"url": "%1$s"}, "withBorder": true, "withBackground": "true", "stretched": "yes"}},
+              {"type": "image", "data": {"file": {"url": "%1$s"}, "withBorder": {"x": 1}, "stretched": 1, "extra": true}}
+            ]}
+            """
+                .formatted(imageUrl));
+
+    JsonNode blocks = parse(result).path("blocks");
+    assertThat(blocks.get(0).path("data").toString())
+        .contains("\"withBorder\":true", "\"withBackground\":true", "\"stretched\":false");
+    // Missing or odd values mean off, and nothing else comes through.
+    assertThat(blocks.get(1).path("data").toString())
+        .contains("\"withBorder\":false", "\"withBackground\":false", "\"stretched\":false")
+        .doesNotContain("extra");
   }
 
   @Test

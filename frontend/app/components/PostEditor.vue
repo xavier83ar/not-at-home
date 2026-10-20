@@ -86,7 +86,7 @@ onMounted(async () => {
         config: {
           endpoints: {},
           types: 'image/jpeg,image/png,image/webp',
-          features: { border: false, background: false, stretch: false, caption: 'optional' },
+          features: { border: true, background: true, stretch: true, caption: 'optional' },
           uploader: { uploadByFile, uploadByUrl },
         },
       },
@@ -164,6 +164,12 @@ defineExpose({ ready, save, isEmpty, clear, insertQuote })
 .post-editor .ce-code__textarea {
   background: var(--bs-tertiary-bg);
   border-color: var(--bs-border-color);
+}
+
+/* The image tool's border and background are fixed light greys; follow the theme like the reader. */
+.post-editor .image-tool {
+  --bg-color: var(--bs-secondary-bg);
+  --border-color: var(--bs-border-color);
 }
 
 .post-editor .cdx-quote__text,
