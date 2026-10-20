@@ -62,12 +62,21 @@ function isWebUrl(url: unknown): url is string {
       ><code>{{ block.data.code }}</code></pre>
       <hr v-else-if="block.type === 'delimiter'" class="my-4 w-25 mx-auto" />
       <figure v-else-if="block.type === 'image' && isSafeImage(block.data)" class="figure d-block">
-        <img
-          :src="block.data.file.url"
-          :alt="inlineText(String(block.data.caption ?? ''))"
-          class="figure-img img-fluid rounded"
-          loading="lazy"
-        />
+        <div
+          class="image-frame mb-2"
+          :class="{
+            'image-frame--border': block.data.withBorder === true,
+            'image-frame--background': block.data.withBackground === true,
+            'image-frame--stretched': block.data.stretched === true,
+          }"
+        >
+          <img
+            :src="block.data.file.url"
+            :alt="inlineText(String(block.data.caption ?? ''))"
+            class="image-frame__picture img-fluid"
+            loading="lazy"
+          />
+        </div>
         <figcaption
           v-if="block.data.caption"
           class="figure-caption"
@@ -93,6 +102,34 @@ function isWebUrl(url: unknown): url is string {
   max-width: 100%;
   overflow-x: auto;
   background-color: var(--bs-tertiary-bg);
+}
+
+/* The image options of the editor (FR-4.4), drawn the way the editor shows them. */
+.image-frame {
+  overflow: hidden;
+  border-radius: var(--bs-border-radius);
+}
+
+.image-frame__picture {
+  display: block;
+}
+
+.image-frame--border {
+  border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
+.image-frame--background {
+  padding: 1rem;
+  background-color: var(--bs-secondary-bg);
+}
+
+.image-frame--background .image-frame__picture {
+  max-width: 60%;
+  margin-inline: auto;
+}
+
+.image-frame--stretched .image-frame__picture {
+  width: 100%;
 }
 
 .editor-content :deep(> :last-child) {

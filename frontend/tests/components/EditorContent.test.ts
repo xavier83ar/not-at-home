@@ -122,6 +122,28 @@ describe('EditorContent', () => {
     expect(images[0]!.attributes('alt')).toBe('A nice view')
   })
 
+  it('applies the image border, background and stretch options', () => {
+    const file = { url: '/api/uploads/abc_1.png' }
+    const frames = render([
+      { type: 'image', data: { file, caption: '' } },
+      { type: 'image', data: { file, withBorder: true, withBackground: true, stretched: true } },
+      { type: 'image', data: { file, withBorder: 'true', stretched: false } },
+    ]).findAll('.image-frame')
+
+    expect(frames).toHaveLength(3)
+    // Posts saved before the options existed have none of them.
+    expect(frames[0]!.classes()).toEqual(['image-frame', 'mb-2'])
+    expect(frames[1]!.classes()).toEqual(
+      expect.arrayContaining([
+        'image-frame--border',
+        'image-frame--background',
+        'image-frame--stretched',
+      ]),
+    )
+    // Only a real true turns an option on.
+    expect(frames[2]!.classes()).toEqual(['image-frame', 'mb-2'])
+  })
+
   it('renders link blocks as safe external links, and skips other addresses', () => {
     const wrapper = render([
       { type: 'link', data: { link: 'https://example.com/trail', title: 'Trail map' } },
